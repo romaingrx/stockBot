@@ -11,6 +11,7 @@ import xgboost as xgb
 from sklearn.model_selection import train_test_split 
 import seaborn as sns, numpy as np
 import matplotlib.pyplot as plt
+import pandas as pd
 
 
 # [1] Importance of features from xgb
@@ -31,9 +32,22 @@ import matplotlib.pyplot as plt
 
 # [2] Features correlation
 
-true_df = df.drop(['Dividends', 'Stock Splits'], axis=1)
-corrmat = true_df.corr()
-top_corr_features = corrmat.index
-plt.figure()
-g = sns.heatmap(true_df[top_corr_features].corr(), annot=True, cmap='RdYlGn')
-plt.show()
+def df_preprocess_yfinance(df):
+    # Add MACD ou difference 
+    df = df.drop(['Dividends', 'Stock Splits'], axis=1)
+    for days in [5, 10, 30]:
+        df['MA%d'%days]  = df['Close'].rolling(window=days).mean() # Compute the moving average for {days} days
+        df['Vol%d'%days] = df['Close'].rolling(window=days).std() # Compute the volability for {days} days
+    return df
+
+def correlation(df):
+    corrmat = df.corr()
+    plt.figure()
+    g = sns.heatmap(corrmat, annot=True, cmap='RdYlGn')
+    plt.show()
+
+
+if __name__=='__main__':
+    df = df_preprocess_yfinance(df)
+    df_to_plot = df.drop('Volume', axis=1)
+    correlation(df)
