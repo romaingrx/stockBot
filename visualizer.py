@@ -10,21 +10,24 @@ import matplotlib.pyplot as plt
 import sys
 from sklearn.metrics import mean_squared_error
 import numpy as np
-import setting
+import settings
 import pandas as pd
 
 DEFAULT = ['SPCE','TSLA','AMD']
 
-def plot_prediction(title, df_real, df_test, args):
+def plot_prediction(title, df_real, df_test, args, mse=False):
     fig = plt.Figure()
     ax = plt.axes() 
     plt.title(title)
     plt.xlabel('Date')
     plt.ylabel('Price [$]')
-    total_mse = np.mean([mean_squared_error(df_real[arg],df_test[arg]) for arg in args])
+    if mse:
+        intersect = df_test.index.intersection(df_real.index)
+        df_intersect = df_real.loc[intersect]
+        total_mse = np.mean([mean_squared_error(df_intersect[arg],df_test[arg]) for arg in args])
+        ax.plot([],[],linestyle=' ',label="MSE : %.2f"%(total_mse))
     df_real[args].plot(color='purple', linestyle='-',ax=ax, label='Real data')
     df_test[args].plot(color='red', linestyle='--',ax=ax, label='Predicted data')
-    ax.plot([],[],linestyle=' ',label="MSE : %.2f"%(total_mse))
     plt.legend()
     plt.show()
 
