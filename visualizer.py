@@ -2,59 +2,67 @@
 # -*- coding: utf-8 -*-
 """
 @author : Romain Graux
-@date : Thursday, 12 March 2020
+@date : Wednesday, 19 March 2020
 """
 
-import yfinance as yf
-import matplotlib.pyplot as plt
-import sys
-from sklearn.metrics import mean_squared_error
 import numpy as np
-import settings
 import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.metrics import mean_squared_error
 
-DEFAULT = ['SPCE','TSLA','AMD']
+def plot_test_prediction(real_data, test_data, mse=False):
+    """
+        Plot predicted data above true data and compute the mean squared error.
 
-def plot_prediction(title, df_real, df_test, args, mse=False):
+            Parameters:
+                real_data (pandas.Series) : True data
+                test_data (pandas.Series) : Predicted data
+                mse       (bool)          : Compute the mse or not
+    """
+    assert isinstance(real_data, pd.Series) and isinstance(test_data, pd.Series)
+
     fig = plt.Figure()
-    ax = plt.axes() 
-    plt.title(title)
+    ax = plt.axes()
+    plt.title("Predicted data above true data.")
     plt.xlabel('Date')
-    plt.ylabel('Price [$]')
+    plt.ylabel('Prices [$]')
     if mse:
-        intersect = df_test.index.intersection(df_real.index)
-        df_intersect = df_real.loc[intersect]
-        total_mse = np.mean([mean_squared_error(df_intersect[arg],df_test[arg]) for arg in args])
-        ax.plot([],[],linestyle=' ',label="MSE : %.2f"%(total_mse))
-    df_real[args].plot(color='purple', linestyle='-',ax=ax, label='Real data')
-    df_test[args].plot(color='red', linestyle='--',ax=ax, label='Predicted data')
+        intersect = test_data.index.intersection(real_data.index)
+        if len(intersect) > 0:
+            df_intersect = real_data.loc[intersect]
+            total_mse = mean_squared_error(df_intersect.values,test_data.values)
+            ax.plot([],[],linestyle=' ',label="MSE : %.2f"%(total_mse))
+    plt.plot(real_data.index, real_data.values, color='purple', linestyle='-', label='Real data')
+    plt.plot(test_data.index, test_data.values, color='red', linestyle='--', label='Predicted data')
     plt.legend()
     plt.show()
 
-def plot_fourier(df):
-    plt.figure(dpi=100)
-    plt.title('Fourier transforms on stock price')
+def plot_fourier(data):
+    """
+        Plot the fourier transform with differents numbers of components.
+
+            Parameters:
+                data (pandas.Series) : Data to fit with fourier transforms.
+    """
+    assert isinstance(data, pd.Series)
+
+    plt.figure()
+    plt.title('Fourier transform of stock prices.')
     plt.xlabel('Date')
     plt.ylabel('Price [$]')
-    FFT = np.fft.fft(np.asarray(df['Close'].tolist()))
-    for num in [3, 6, 9, 15, 30, 50]: 
+    FFT = np.fft.fft(np.asarray(data.values.tolist())) # Get the fast fourier transform
+    for num in [3, 6, 9, 15]:
         fft = np.copy(FFT)
         fft[num:-num] = 0
-        ifft = np.fft.ifft(fft) 
-        plt.plot(pd.to_datetime(np.linspace(pd.Timestamp(df.index.values[0]).value,pd.Timestamp(df.index.values[-1]).value,len(ifft))), np.real(ifft), linestyle='--', label='Fourier transform with %d components'%num)
-    plt.plot(df.index.values,df['Close'], color='purple', ls='-', label='Real')
+        ifft = np.fft.ifft(fft)
+        plt.plot(pd.to_datetime(np.linspace(pd.Timestamp(data.index.values[0]).value,pd.Timestamp(data.index.values[-1]).value,len(ifft))), np.real(ifft), linestyle='--', label='Fourier transform with %d components'%num)
+    plt.plot(data.index,data.values, color='purple', ls='-', label='Real')
     plt.legend()
     plt.show()
-
-
-def visualize(args):
-    tickers = list(map(lambda arg : yf.Ticker(arg), args))
-    hist    = list(map(lambda arg : arg.history(period='1d'), tickers))
-    print(hist[0]['Open'])
-    return None
 
 
 if __name__=='__main__':
+    import yfinance as yf
     SPCE = yf.Ticker('SPCE')
     hist = SPCE.history(period='max')
-    plot_fourier(hist)
+    plot_fourier(hist['Close'])
