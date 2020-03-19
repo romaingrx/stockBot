@@ -1,0 +1,13 @@
+alpha-vantage
+h5py
+matplotlib
+numpy
+pandas
+scikit-learn
+seaborn
+statsmodels
+tensorflow
+tensorboard
+yfinance
+xgboost
+keras

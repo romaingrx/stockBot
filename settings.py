@@ -8,6 +8,7 @@
 from alpha_vantage.timeseries import TimeSeries
 import matplotlib.pyplot as plt
 import yfinance as yf
+from datetime import datetime
 
 TS = TimeSeries(output_format='pandas')
 
@@ -22,9 +23,10 @@ TESTSIZE = 0.2 # Size of seperation between train and validation data
 # FIXED VARIABLES #
 # # # # # # # # # #
 
-MODELNAME       = ''
-MODELPATH       = './res/models/%s'%(MODELNAME)
-TENSORBOARDPATH = './res/tensorboards/%s'%(MODELNAME)
+MODELNAME       = ""
+MODELPATH       = "./res/models/%s"
+TENSORBOARDPATH = "./res/tensorboards/%s"
+DEFAULT_TENSORBOARDPATH  = "./res/tensorboards/" + datetime.now().strftime("%Y/%m/%d-%H.%M.%S")
 
 
 # # # # # # #

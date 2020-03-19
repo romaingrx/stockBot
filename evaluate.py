@@ -9,6 +9,7 @@ from settings import *
 import seaborn as sns, numpy as np
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 
 def auto_correlation(df):
     """
@@ -17,35 +18,39 @@ def auto_correlation(df):
             Parameters:
                 df (pandas.DataFrame) : dataframe with all columns.
     """
+    plt.title("Correlation between all features.")
     corrmat = df.corr() # Correlation matrix
-    plt.figure()
     g = sns.heatmap(corrmat, annot=True, cmap='RdYlGn')
-    plt.show()
 
-def prediction_correlation(true_array, prediction_array):
+def prediction_correlation(real_data, test_data):
     """
         Plot the correlation between true data and predicted data.
 
             Parameters:
-                true_array       (array)
-                prediction_array (array)
+                real_data (pandas.Series) : True data
+                test_data (pandas.Series) : Predicted data
     """
-    plt.Figure()
+    assert isinstance(real_data, pd.Series) and isinstance(test_data, pd.Series)
+
+    intersect = test_data.index.intersection(real_data.index)
+    df_intersect = real_data.loc[intersect]
+
+    plt.title("The correlation between predicted data and true data.")
     plt.xlabel("True values")
     plt.ylabel("Prediction values")
-    plt.scatter(true_array, prediction_array, color='purple', label='Data')
-    min_value = min(min(true_array), min(prediction_array))
-    max_value = max(max(true_array), max(prediction_array))
+    plt.scatter(df_intersect.values, test_data.values, color='purple', label='Data')
+    min_value = min(min(df_intersect.values), min(test_data.values))
+    max_value = max(max(df_intersect.values), max(test_data.values))
     arange = np.linspace(min_value, max_value, 200)
     plt.plot(arange, arange, ls='--', color='blue', label='Desired correlation')
-    plt.legend()
-    plt.show()
 
-def prediction_cross_correlation(true_array, prediction_array):
-    plt.Figure()
+def prediction_cross_correlation(real_data, test_data):
+    assert isinstance(real_data, pd.Series) and isinstance(test_data, pd.Series)
+
     plt.title('Cross correlation')
-    plt.xcorr(real[-prediction_size:], prediction, usevlines=True, normed=True)
-    plt.show()
+    intersect = test_data.index.intersection(real_data.index)
+    df_intersect = real_data.loc[intersect]
+    plt.xcorr(df_intersect.values, test_data.values, usevlines=True, normed=True)
 
 
 if __name__=='__main__':
