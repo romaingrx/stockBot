@@ -36,7 +36,7 @@ if __name__=='__main__':
     naive_LSTM.fit(train_rolling, epochs=epochs) # Fit train data
     predictions = naive_LSTM.predict(test_rolling) # Predict test data
     predictions = scaler.inverse_transform(predictions.reshape((-1,1))).reshape((-1)) # Convert data from 0 to 1 to true value
-    df_test['PredictedClose'] = df['Close'].values
+    df_test['PredictedClose'] = df_test['Close'].values
     df_test['PredictedClose'].values[len(df_test.index)-len(predictions):] = predictions # The first {look_back} days do not have values
 
     plt.figure()
