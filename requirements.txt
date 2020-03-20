@@ -11,3 +11,4 @@ tensorboard
 yfinance
 xgboost
 keras
+mplfinance

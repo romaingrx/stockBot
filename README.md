@@ -1,5 +1,8 @@
 StockBot
 =====
+<p align="center">
+<img src="https://bullishbears.com/wp-content/uploads/2018/07/AI-TRADING-1.png">
+</p>
 
 How to run scripts
 ----
