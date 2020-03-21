@@ -10,10 +10,12 @@ for path in ['.', '..']:
     sys.path.append(path)
 from keras.models import Sequential
 from keras.layers import LSTM, Dense, Dropout
-from model import naive_LSTM
+from stockBot.agents.models.model import naive_LSTM_Network
 
 if __name__=='__main__':
-    import visualizer, evaluate, preprocess
+    from stockBot.utils.visualizer import visualizer
+    from stockBot.utils.evaluate import evaluate
+    from stockBot.data.preprocess import preprocess
     import yfinance as yf, numpy as np, matplotlib.pyplot as plt
     from sklearn.model_selection import train_test_split
     from sklearn.preprocessing import MinMaxScaler
@@ -26,7 +28,7 @@ if __name__=='__main__':
     look_back, epochs = 15, 25 # look_back is the price history length LSTM is looking at to train and predict, epochs is the number of tries for training
     scaler = MinMaxScaler(feature_range=(0, 1)) # Get the scaler to map the data from 0 to 1
     df['ScaledClose'] = scaler.fit_transform(df['Close'].values.reshape((-1,1))) # Scale the data from 0 to 1
-    naive_LSTM = naive_LSTM((look_back, 1))
+    naive_LSTM = naive_LSTM_Network((look_back, 1))
     model = naive_LSTM.model # Get the LSTM model
     df_train, df_test = train_test_split(df, test_size=0.2, shuffle=False) # Split data between train and test batch
     train_values = df_train['ScaledClose'].values.reshape((-1,1))
