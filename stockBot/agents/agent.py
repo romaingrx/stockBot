@@ -27,18 +27,17 @@ class Agent():
         self.neural_network  = neural_network or Deep_Q_Learning(self.env.observation_shape)
         self.target_network = tf.keras.models.clone_model(self.neural_network.model)
         self.target_network.trainable = False
-        print(dir(self.target_network))
         self.reward_strategy = reward_strategy or Simple_Reward_Strategy()
         self.broker          = broker or Fake_Broker()
 
         # A REMPLACER EN PREMIER
 
-        self.action_space = (3,)
-        self.n_actions = len(self.action_space)
+        self.action_space = (3)
+        self.n_actions = 3
 
 
 
-    def train(self, data=None, reward_strategy:Reward_Strategy=None, epochs:int=None, batch_size:int=128, memory_capacity:int=1000, learning_rate:float=0.001, max_steps:Optional=None, update_target_every:int=None) -> List[float]:
+    def train(self, data=None, reward_strategy:Reward_Strategy=None, epochs:int=None, batch_size:int=128, memory_capacity:int=1000, learning_rate:float=0.001, discount_factor:float=0.05, max_steps:Optional=None, update_target_every:int=None) -> List[float]:
 
         memory = Memory(memory_capacity, DQNTransition)
         reward_strategy = self.reward_strategy
@@ -62,7 +61,7 @@ class Agent():
             while not done:
                 epsilon = eps_min + (eps_max - eps_min)*np.exp(-steps/eps_constant)
 
-                decision, buy = self.neural_network.act(state, epsilon=epsilon, max_buy=5)
+                decision = self.neural_network.act(state, epsilon=epsilon)
 
                 next_state, reward, done, info = self.env.step()
 
@@ -77,16 +76,18 @@ class Agent():
                 if len(memory) < batch_size:
                     continue
 
-                # self._fit_memory(memory, batch_size, learning_rate)
+                self._fit_memory(memory, batch_size, learning_rate, discount_factor)
 
-                # if update_target_every % steps == 0:
-                #     self.target_network = tf.keras.models.clone_model(self.neural_network.model)
-                #     self.target_network.trainable = False
+                if update_target_every % steps == 0:
+                    self.target_network.set_weights(self.neural_network.model.get_weights())
+                    # self.target_network = tf.keras.models.clone_model(self.neural_network.model)
+                    # self.target_network.trainable = False
 
                 if max_steps and steps > max_steps:
                     done = True
 
                 # self.env.render(episode)
+            print('episode %d'%episode)
             if episode == epochs - 1:
                 self.neural_network.save(episode)
 
@@ -110,7 +111,7 @@ class Agent():
 
         with tf.GradientTape() as g:
             state_action_values = tf.math.reduce_sum(
-                self.neural_network(state_batch) * tf.one_hot(action_batch, self.n_actions),
+                self.neural_network.model(state_batch) * tf.one_hot(action_batch, self.n_actions),
                 axis=1
             )
             next_state_values = tf.where(
@@ -122,6 +123,6 @@ class Agent():
             expected_state_action_values = reward_batch + (discount_factor * next_state_values)
             loss_value = loss(expected_state_action_values, state_action_values)
 
-        variables = self.neural_network.trainable_variables
+        variables = self.neural_network.model.trainable_variables
         gradients = g.gradient(loss_value, variables)
-        optimizer.apply_gradient(zip(gradients, variables))
+        optimizer.apply_gradients(zip(gradients, variables))

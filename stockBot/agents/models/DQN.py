@@ -14,7 +14,7 @@ from stockBot.agents.models import Reinforcement_Network
 from stockBot.agents.rewards import Reward_Strategy, Simple_Reward_Strategy
 from stockBot.agents.memory import Memory
 
-DQNTransition = namedtuple('DQNTransition', ['state', 'action', 'reward', 'next_state', 'transaction'])
+DQNTransition = namedtuple('DQNTransition', ['state', 'action', 'reward', 'next_state', 'done'])
 
 class Deep_Q_Learning(Reinforcement_Network):
 
@@ -39,21 +39,15 @@ class Deep_Q_Learning(Reinforcement_Network):
                                            kernel_initializer=distribution,
                                            bias_initializer=bias,
                                            name='decision')(self.feed_layer)
-        self.buy_layer      = tf.keras.layers.Dense(1,
-                                           kernel_initializer=distribution,
-                                           bias_initializer=bias,
-                                           name='buy')(self.feed_layer)
         self.model          = tf.keras.models.Model(inputs=[self.input_layer],
-                                          outputs=[self.decision_layer,
-                                                   self.buy_layer
-                                                   ])
+                                          outputs=[self.decision_layer])
 
-    def act(self, state, epsilon=0, max_buy=0):
+    def act(self, state, epsilon=0):
         if epsilon > random.random():
-            return np.random.choice(self.decision_size), random.randrange(0, max_buy)
+            return np.random.choice(self.decision_size)
         else:
-            decision, buy = self.predict(np.expand_dims(state, 0))
-            return np.argmax(decision), int(buy)
+            decision = self.predict(np.expand_dims(state, 0))
+            return np.argmax(decision)
 
     def get_state(self, data, t:int, n:int):
         data = data.reshape((self.input_shape[0], -1))
