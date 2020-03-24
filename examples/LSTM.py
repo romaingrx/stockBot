@@ -12,7 +12,7 @@ for path in ['.', '..']:
 import pandas as pd
 import tensorflow as tf
 import sklearn
-from stockBot.agents.models.model import Neural_Network
+from stockBot.agents.models import Neural_Network
 from sklearn.model_selection import train_test_split
 
 class LSTM_Network(Neural_Network):
@@ -20,7 +20,7 @@ class LSTM_Network(Neural_Network):
     def __init__(self, input_shape):
         super().__init__(input_shape)
 
-    def _build_model(self):
+    def build_model(self):
         self.model = tf.keras.models.Sequential([
             tf.keras.layers.LSTM(64, input_shape=self.input_shape, return_sequences=True),
             tf.keras.layers.Dense(64, activation='relu'),

@@ -10,7 +10,7 @@ for path in ['.', '..']:
     sys.path.append(path)
 from keras.models import Sequential
 from keras.layers import LSTM, Dense, Dropout
-from stockBot.agents.models.model import naive_LSTM_Network
+from stockBot.agents.models import naive_LSTM_Network
 
 if __name__=='__main__':
     from stockBot.utils.visualizer import visualizer

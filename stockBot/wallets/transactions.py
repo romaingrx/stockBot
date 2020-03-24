@@ -6,13 +6,16 @@
 """
 
 from typing import Optional, Text, Tuple, Dict
-
-default_dict = dict({'ticker_name':None, 'action':None, 'quantity':None, 'price':None, 'quantity':None, 'fees':None, 'amount':None})
+from stockBot.types import orderAction
+from stockBot.exceptions import OrderActionError
 
 class Transaction:
 
-    def __init__(self, ticker_name:Text, action:Text, quantity, price, fees, amount:Optional=None):
-        self.action      = action
+    def __init__(self, ticker_name:Text, action:Text or orderAction, quantity:int, price:float, fees:float, amount:Optional=None):
+        if not isinstance(action, orderAction):
+            if not action in orderAction.values():
+                raise OrderActionError(action)
+        self.action      = action if not isinstance(action, orderAction) else action.value
         self.ticker_name = ticker_name
         self.quantity    = quantity
         self.price       = price

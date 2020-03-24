@@ -4,3 +4,6 @@
 @author : Romain Graux
 @date : Saturday, 21 March 2020
 """
+
+from stockBot.data.preprocess.preprocess import df_preprocess_yfinance
+from stockBot.data.preprocess.preprocess import df_preprocess_alpha_vantage

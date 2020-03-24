@@ -5,26 +5,32 @@
 @date : Saturday, 21 March 2020
 """
 
-from abc import abstractmethod
+from abc import ABC, abstractmethod
+from stockBot.wallets import Wallet
 
-class reward_strategy:
+class Reward_Strategy(ABC):
 
     def __init__(self):
-        return
+        pass
 
     @abstractmethod
     def get_reward(self):
         raise NotImplementedError("get_reward not implemented")
 
-def simple_reward_strategy(reward_strategy):
+class Simple_Reward_Strategy(Reward_Strategy):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def get_reward(self, portfolio) -> float:
+    def get_reward(self, wallet:Wallet) -> float:
+        diff = wallet.balance - wallet.initial_balance
+        reward = diff / wallet.initial_balance
+        return reward
+
+class Aggressive_Reward_Strategy(Reward_Strategy):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def get_reward(self, wallet:Wallet) -> float:
         raise NotImplementedError("get_reward not implemented")
-
-def aggressive_reward_strategy(reward_strategy):
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)

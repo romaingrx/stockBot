@@ -30,8 +30,8 @@ DEFAULT_TENSORBOARDPATH  = PROJECTPATH + "/../res/tensorboards/" + datetime.date
 # # # # # # #
 
 # Background in white
-plt.rcParams['figure.facecolor'] = '#000000'
-plt.rcParams['axes.facecolor']   = '#000000'
+plt.rcParams['figure.facecolor'] = '#FFFFFF'
+plt.rcParams['axes.facecolor']   = '#FFFFFF'
 
 # Background in grey
 # plt.rcParams['figure.facecolor'] = '#A9A9A9'

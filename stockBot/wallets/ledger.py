@@ -6,8 +6,8 @@
 """
 
 import pandas as pd
-from typing import List
-from collections import namedtuple
+from typing import List, Text
+
 from .transactions import Transaction
 
 class Ledger:
@@ -15,11 +15,18 @@ class Ledger:
     def __init__(self):
         self._transactions = []
 
-    def push(self, transaction:'Transaction'):
+    def push(self, transaction:Transaction):
         self._transactions += [transaction]
 
-    def transactions(self) -> List['Transaction']:
+    def transactions(self) -> List[Transaction]:
         return self._transactions
 
+    def reset(self):
+        del self._transactions
+        self._transactions = []
+
     def as_frame(self) -> pd.DataFrame:
-        return pd.DataFrame(self.transactions)
+        return pd.DataFrame([transaction.as_dict() for transaction in self._transactions])
+
+    def __str__(self) -> Text:
+        return str(self.as_frame()) if len(self._transactions) > 0 else "No transactions yet."

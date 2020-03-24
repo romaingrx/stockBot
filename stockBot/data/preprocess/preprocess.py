@@ -5,7 +5,7 @@
 @date : Wednesday, 19 March 2020
 """
 import datetime
-
+import pandas as pd
 
 def df_preprocess_alpha_vantage(df):
     df.columns = ['Open', 'High', 'Low', 'Close', 'Volume']
@@ -26,3 +26,10 @@ def df_preprocess_yfinance(df):
     MACD = df['Close'].rolling(window='12d').mean() - df['Close'].rolling(window='26d').mean()
     df['MACD-Signal'] = MACD - MACD.rolling(window='9d').mean()
     return df
+
+class df_to_timeseries:
+
+    @staticmethod
+    def compute(df, length):
+        assert isinstance(df, pd.DataFrame)
+        pass
