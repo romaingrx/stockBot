@@ -31,7 +31,10 @@ class Stonk:
         return self.ticker_name == o.ticker_name
 
     def __str__(self):
-        return self.ticker_name
+        return "<%s-quantity:%d-price:%.2f>"%(self.ticker_name, self.quantity, self.price)
+
+    def __repr__(self):
+        return self.__str__()
 
 class Portfolio:
 
@@ -48,8 +51,7 @@ class Portfolio:
         for index, stonk in enumerate(self._portfolio):
             if stonk.ticker_name == ticker_name:
                 break
-
-        return index
+        return index if index+1 < len(self._portfolio) else -1
 
     def get_quantity(self, ticker_name):
         index = self.find_ticker(ticker_name)
@@ -76,9 +78,17 @@ class Portfolio:
         elif transaction.action == orderAction.SELL.value:
             self.current_balance            -= transaction.quantity * self._portfolio[index].price
             self._portfolio[index].quantity -= transaction.quantity
+            if self._portfolio[index].quantity == 0:
+                del self._portfolio[index]
 
     def as_frame(self) -> pd.DataFrame:
         return pd.DataFrame([stock.as_dict() for stock in self._portfolio])
+
+    def __str__(self) -> str:
+        string  = "\n--- PORTFOLIO ---\n"
+        string += self.as_frame().to_string(index=False)
+        string += "\n"
+        return string
 
     def update(self, ticker_name, step:int=None):
         iter = self.find_ticker(ticker_name)

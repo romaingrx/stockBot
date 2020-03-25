@@ -29,5 +29,9 @@ class Ledger:
         dtf = pd.DataFrame([transaction.as_dict() for transaction in self._transactions])
         dtf.index_col='date'
         return dtf
+
     def __str__(self) -> Text:
-        return str(self.as_frame()) if len(self._transactions) > 0 else "No transactions yet."
+        string  = "\n--- LEDGER ---\n"
+        string += self.as_frame().to_string(index=False) if len(self._transactions) > 0 else "No transactions yet."
+        string += "\n"
+        return string

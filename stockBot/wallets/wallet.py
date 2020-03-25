@@ -50,8 +50,8 @@ class Wallet:
         string  = 'Balance : \t\t%.2f\n'%self.balance
         string += 'Free balance : \t\t%.2f\n' %self.free_balance
         string += 'Locked balance : \t%.2f\n' %self.locked_balance
+        string += str(self._portfolio)
         string += str(self._ledger)
-        string += '\n'
         return string
 
     # TODO: Met le Wallet comme initialement (initial balance)
