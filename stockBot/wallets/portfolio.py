@@ -29,22 +29,30 @@ class Portfolio:
         pass
 
     def findticker(self,ticker_name):
-        if(len(self._portfolio)) == 0:
+        # if(len(self._portfolio)) == 0:
+        #     s = Stonk(ticker_name,0)
+        #     self._portfolio += [s]
+        #     return 0
+        # else:
+        i = 0
+        while( i<len(self._portfolio) and self._portfolio[i].ticker_name != ticker_name):
+            i = i+1
+        if(i == len(self._portfolio)):
             s = Stonk(ticker_name,0)
             self._portfolio += [s]
-            return 0
-        else:
-            i = 0
-            while(self._portfolio[i].ticker_name != ticker_name):
-                i = i+1
-            return i
+
+        return i
 
     def push(self, transaction:Transaction):
         """
             Met à jour les attributs en fonctions du orderAction (BUY, SELL) de la transaction
         """
         i = self.findticker(transaction.ticker_name)
-        self._portfolio[i].quantity = self._portfolio[i].quantity + transaction.quantity
+
+
+        self._portfolio[i].quantity += transaction.quantity if transaction.action == orderAction.BUY.value else -transaction.quantity
+
+
         self.current_balance += transaction.amount if transaction.action == orderAction.BUY.value else -transaction.amount
 
     def as_frame(self) -> pd.DataFrame:
