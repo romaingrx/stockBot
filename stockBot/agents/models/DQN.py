@@ -49,13 +49,3 @@ class Deep_Q_Learning(Reinforcement_Network):
         else:
             decision = self.predict(np.expand_dims(state, 0))
             return np.argmax(decision)
-
-    def get_state(self, data, t:int, n:int):
-        data = data.reshape((self.input_shape[0], -1))
-        ret = np.zeros((self.input_shape[0], n))
-        begining = t - n
-        if begining >= 0:
-            ret = data[:, begining:t]
-        elif t > 0:
-            ret[:, -begining:] = data[:, 0:t]
-        return ret
