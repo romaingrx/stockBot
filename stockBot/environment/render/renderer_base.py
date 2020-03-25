@@ -18,6 +18,6 @@ class Renderer(ABC):
     @abstractmethod
     def render(self, episode:int=None, wallet:Wallet=None):
         raise NotImplementedError()
-
+    @abstractmethod
     def reset(self):
         pass
