@@ -12,7 +12,7 @@ import datetime
 
 class Transaction:
 
-    def __init__(self, ticker_name:Text, action:Text or orderAction, quantity:int, price:float, fees:float, amount:Optional=None, date:datetime=datetime.datetime.now()):
+    def __init__(self, ticker_name:Text, action:Text or orderAction, quantity:int, price:float, fees:float=None, amount:Optional=None, date:datetime=datetime.datetime.now()):
         if not isinstance(action, orderAction):
             if not action in orderAction.values():
                 raise OrderActionError(action)
@@ -20,9 +20,9 @@ class Transaction:
         self.ticker_name = ticker_name
         self.quantity    = quantity
         self.price       = price
-        self.fees        = fees
-        self.amount      = amount if amount else self.price * self.quantity
-        self.date = date
+        self.fees        = fees or 0
+        self.amount      = amount or self.price * self.quantity
+        self.date        = date
 
     def as_dict(self) -> dict:
         return dict({'date':self.date, 'action':self.action, 'ticker_name':self.ticker_name, 'quantity':self.quantity, 'price':self.price, 'fees':self.fees, 'amount':self.amount})

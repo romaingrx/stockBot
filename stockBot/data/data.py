@@ -5,14 +5,13 @@
 @date : Sunday, 22 March 2020
 """
 
-from abc import abstractmethod
-from typing import List, Text
-
 from stockBot.data.preprocess import df_preprocess_yfinance
 from stockBot.data.streamer import streamer_mapper, yfinance, alpha_vantage, quandl
 
 from abc import abstractmethod
 from typing import List, Text
+import numpy as np
+import yfinance as yf
 
 from stockBot.types import streamerSource
 from stockBot.exceptions import StreamerSourceError
@@ -28,6 +27,7 @@ class Data_Streamer:
         self.ticker_names = tickers if isinstance(tickers, list) else [tickers]
         self.Streamer = streamer_mapper[self.src](self.ticker_names, self._api_key)
         self.DataFrames = self.Streamer.DataFrames
+        self.n_features = self.DataFrames[self.ticker_names[0]].shape[1]
         self.iter = 0
 
     def has_next(self, ticker_name):
@@ -37,8 +37,16 @@ class Data_Streamer:
         if not self.has_next(ticker_name):
             raise IndexError()
         row = self.DataFrames[ticker_name].iloc[self.iter]
+        close_row = np.argwhere(self.DataFrames[ticker_name].columns == 'Close')
         self.iter += 1
-        return row
+        return row, row[close_row]
 
     def reset(self):
         self.iter = 0
+
+
+def get_step_data(ticker_name, step):
+    tick = yf.Ticker(ticker_name)
+    df = tick.history('max')
+
+    return df['Close'].values[step]

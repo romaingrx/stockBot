@@ -4,10 +4,13 @@
 @author : Romain Graux
 @date : Saturday, 21 March 2020
 """
-
+import numpy as np
 import pandas as pd
+from typing import Text
+
 from .transactions import Transaction
 from stockBot.types import orderAction, orderTime, orderType
+from stockBot.data import get_step_data
 
 # TODO: créer des attributs cohérents pour contenir les transactions avec le prix actuel de l'action
 # TODO: implémenter la fonction push pour qu'il ajoute une transaction (ACHAT)
@@ -15,11 +18,20 @@ from stockBot.types import orderAction, orderTime, orderType
 # TODO: implémenter la fonction update qui met à jour le prix des actions
 # TODO: implémenter la fonction reset qui remet tout à zéro
 class Stonk:
-    def __init__(self, ticker_name, quantity:int):
+
+    def __init__(self, ticker_name:Text, quantity:int, price:float):
         self.ticker_name = ticker_name
-        self.quantity = quantity
+        self.quantity    = quantity
+        self.price       = price
+
     def as_dict(self)->dict:
         return dict({'ticker_name':self.ticker_name, 'quantity':self.quantity})
+
+    def __contains__(self, o):
+        return self.ticker_name == o.ticker_name
+
+    def __str__(self):
+        return self.ticker_name
 
 class Portfolio:
 
@@ -28,37 +40,55 @@ class Portfolio:
         self._portfolio = []
         pass
 
-    def findticker(self,ticker_name):
-        # if(len(self._portfolio)) == 0:
-        #     s = Stonk(ticker_name,0)
-        #     self._portfolio += [s]
-        #     return 0
-        # else:
-        i = 0
-        while( i<len(self._portfolio) and self._portfolio[i].ticker_name != ticker_name):
-            i = i+1
-        if(i == len(self._portfolio)):
-            s = Stonk(ticker_name,0)
-            self._portfolio += [s]
+    def find_ticker(self, ticker_name):
+        """
+            return the index of the ticker if it exists, else return None
+        """
+        index = -1
+        for index, stonk in enumerate(self._portfolio):
+            if stonk.ticker_name == ticker_name:
+                break
 
-        return i
+        return index
+
+    def get_quantity(self, ticker_name):
+        index = self.find_ticker(ticker_name)
+        return self._portfolio[index].quantity if index != -1 else 0
 
     def push(self, transaction:Transaction):
         """
             Met à jour les attributs en fonctions du orderAction (BUY, SELL) de la transaction
         """
-        i = self.findticker(transaction.ticker_name)
+        index = self.find_ticker(transaction.ticker_name)
 
+        if index == -1:
+            index = len(self._portfolio)
+            self._portfolio.append(Stonk(transaction.ticker_name, 0, 0))
 
-        self._portfolio[i].quantity += transaction.quantity if transaction.action == orderAction.BUY.value else -transaction.quantity
+        if transaction.action == orderAction.BUY.value:
+            last_price    = self._portfolio[index].price
+            last_quantity = self._portfolio[index].quantity
+            PRU = (last_price*last_quantity + transaction.price*transaction.quantity)/(last_quantity + transaction.quantity)
+            self._portfolio[index].quantity += transaction.quantity
+            self._portfolio[index].price     = PRU
+            self.current_balance            += transaction.amount
 
-
-        self.current_balance += transaction.amount if transaction.action == orderAction.BUY.value else -transaction.amount
+        elif transaction.action == orderAction.SELL.value:
+            self.current_balance            -= transaction.quantity * self._portfolio[index].price
+            self._portfolio[index].quantity -= transaction.quantity
 
     def as_frame(self) -> pd.DataFrame:
         return pd.DataFrame([stock.as_dict() for stock in self._portfolio])
-    def update(self):
-        pass
+
+    def update(self, ticker_name, step:int=None):
+        iter = self.find_ticker(ticker_name)
+        if iter != -1:
+            stonk = self._portfolio[iter]
+            if stonk.quantity == 0:
+                del self._portfolio[iter]
+            last_price = stonk.price
+            stonk.price = get_step_data(stonk.ticker_name, step)
+            self.current_balance += (stonk.price-last_price)*stonk.quantity
 
     def reset(self):
         pass

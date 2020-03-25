@@ -32,23 +32,26 @@ class Wallet:
         if transaction.action is orderAction.BUY.value and transaction.amount+transaction.fees > self.free_balance:
             raise NotEnoughBalanceError()
 
-        self.free_balance += transaction.amount+transaction.fees if transaction.action == orderAction.SELL.value else -(transaction.amount+transaction.fees)
+        self.free_balance += transaction.amount-transaction.fees if transaction.action == orderAction.SELL.value else -(transaction.amount+transaction.fees)
 
         self._portfolio.push(transaction)
         self._ledger.push(transaction)
         self.update()
 
     # TODO: met à jour toutes les balances en fonction du _portfolio
-    def update(self):
-        self.balance = self.free_balance + self._portfolio.current_balance
+    def update(self, ticker_name=None, step=None):
+        if ticker_name and step:
+            self._portfolio.update(ticker_name, step)
         self.locked_balance = self._portfolio.current_balance
+        self.balance = self.free_balance + self.locked_balance
 
     # TODO: représentation texte du Wallet
     def __str__(self):
-        string  = 'Potential Balance : \t%.2f\n'%self.potential_balance
+        string  = 'Balance : \t\t%.2f\n'%self.balance
         string += 'Free balance : \t\t%.2f\n' %self.free_balance
         string += 'Locked balance : \t%.2f\n' %self.locked_balance
         string += str(self._ledger)
+        string += '\n'
         return string
 
     # TODO: Met le Wallet comme initialement (initial balance)

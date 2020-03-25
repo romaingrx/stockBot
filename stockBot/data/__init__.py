@@ -8,3 +8,4 @@
 from stockBot.data.preprocess.preprocess import df_preprocess_yfinance
 from stockBot.data.data import Data_Streamer
 from stockBot.data.streamer.streamer import Streamer
+from stockBot.data.data import get_step_data
