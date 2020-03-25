@@ -12,3 +12,4 @@ yfinance
 xgboost
 keras
 mplfinance
+quandl
