@@ -16,7 +16,7 @@ from stockBot.types import orderAction
 
 class Wallet:
 
-    def __init__(self, initial_balance):
+    def __init__(self, initial_balance:float):
         # TODO: Ajouter des attributs cohérents pour contenir toutes les informations nécessaires
         self.initial_balance = initial_balance
         self.balance         = initial_balance
@@ -29,10 +29,10 @@ class Wallet:
     # TODO: ajoute la transaction dans _portfolio et _ledger et met ensuite à jour les balances
     def push(self, transaction:'Transaction'):
         assert isinstance(transaction, Transaction)
-        if transaction.action is orderAction.BUY.value and transaction.amount > self.free_balance:
+        if transaction.action is orderAction.BUY.value and transaction.amount+transaction.fees > self.free_balance:
             raise NotEnoughBalanceError()
 
-        self.free_balance += transaction.amount if transaction.action == orderAction.SELL.value else -transaction.amount
+        self.free_balance += transaction.amount+transaction.fees if transaction.action == orderAction.SELL.value else -(transaction.amount+transaction.fees)
 
         self._portfolio.push(transaction)
         self._ledger.push(transaction)
