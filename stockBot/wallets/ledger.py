@@ -26,7 +26,8 @@ class Ledger:
         self._transactions = []
 
     def as_frame(self) -> pd.DataFrame:
-        return pd.DataFrame([transaction.as_dict() for transaction in self._transactions])
-
+        dtf = pd.DataFrame([transaction.as_dict() for transaction in self._transactions])
+        dtf.index_col='date'
+        return dtf
     def __str__(self) -> Text:
         return str(self.as_frame()) if len(self._transactions) > 0 else "No transactions yet."

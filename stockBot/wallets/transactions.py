@@ -25,7 +25,7 @@ class Transaction:
         self.date = date
 
     def as_dict(self) -> dict:
-        return dict({'action':self.action, 'ticker_name':self.ticker_name, 'quantity':self.quantity, 'price':self.price, 'fees':self.fees, 'amount':self.amount})
+        return dict({'date':self.date, 'action':self.action, 'ticker_name':self.ticker_name, 'quantity':self.quantity, 'price':self.price, 'fees':self.fees, 'amount':self.amount})
 
     def __str__(self):
         return str(self.as_dict())
