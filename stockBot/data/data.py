@@ -37,16 +37,20 @@ class Data_Streamer:
         if not self.has_next(ticker_name):
             raise IndexError()
         row = self.DataFrames[ticker_name].iloc[self.iter]
-        close_row = np.argwhere(self.DataFrames[ticker_name].columns == 'Close')
         self.iter += 1
-        return row, row[close_row]
+        return row, row['Close']
 
     def reset(self):
         self.iter = 0
 
+already_downloaded = {}
 
 def get_step_data(ticker_name, step):
-    tick = yf.Ticker(ticker_name)
-    df = tick.history('max')
-
-    return df['Close'].values[step]
+    try:
+        return already_downloaded[ticker_name][step]
+    except:
+        tick = yf.Ticker(ticker_name)
+        df = tick.history('max')
+        close_prices = df['Close'].values
+        already_downloaded[ticker_name] = close_prices
+        return already_downloaded[ticker_name][step]
