@@ -26,6 +26,7 @@ class Agent():
         self.data_streamer   = data_streamer or Data_Streamer('SPCE')
         self.neural_network  = neural_network or Deep_Q_Learning(self.env.observation_shape)
         self.target_network = tf.keras.models.clone_model(self.neural_network.model)
+        # self.target_network.name = 'Target Network'
         self.target_network.trainable = False
         self.reward_strategy = reward_strategy or Simple_Reward_Strategy()
         self.broker          = broker or Fake_Broker()
@@ -57,11 +58,14 @@ class Agent():
             state = self.env.reset()
             done = False
             steps = 0
+            loss_values = []
 
             while not done:
                 epsilon = eps_min + (eps_max - eps_min)*np.exp(-steps/eps_constant)
 
                 decision = self.neural_network.act(state, epsilon=epsilon)
+
+                self.neural_network.summary_histogram('decision', decision, steps*(1+episode))
 
                 next_state, reward, done, info = self.env.step()
 
@@ -76,7 +80,8 @@ class Agent():
                 if len(memory) < batch_size:
                     continue
 
-                self._fit_memory(memory, batch_size, learning_rate, discount_factor)
+                loss_value = self._fit_memory(memory, batch_size, learning_rate, discount_factor)
+                loss_values.append(loss_value)
 
                 if update_target_every % steps == 0:
                     self.target_network.set_weights(self.neural_network.model.get_weights())
@@ -87,6 +92,10 @@ class Agent():
                     done = True
 
                 # self.env.render(episode)
+            mean_loss = np.mean(loss_values)
+
+            self.neural_network.summary_scalar('loss', mean_loss, episode)
+
             print('episode %d'%episode)
             if episode == epochs - 1:
                 self.neural_network.save(episode)
@@ -123,6 +132,9 @@ class Agent():
             expected_state_action_values = reward_batch + (discount_factor * next_state_values)
             loss_value = loss(expected_state_action_values, state_action_values)
 
+
         variables = self.neural_network.model.trainable_variables
         gradients = g.gradient(loss_value, variables)
         optimizer.apply_gradients(zip(gradients, variables))
+
+        return loss_value

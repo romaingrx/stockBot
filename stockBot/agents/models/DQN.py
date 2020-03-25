@@ -40,7 +40,8 @@ class Deep_Q_Learning(Reinforcement_Network):
                                            bias_initializer=bias,
                                            name='decision')(self.feed_layer)
         self.model          = tf.keras.models.Model(inputs=[self.input_layer],
-                                          outputs=[self.decision_layer])
+                                          outputs=[self.decision_layer],
+                                          name='Policy_Network')
 
     def act(self, state, epsilon=0):
         if epsilon > random.random():

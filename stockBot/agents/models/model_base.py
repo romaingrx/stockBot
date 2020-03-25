@@ -10,6 +10,7 @@ import logging
 import tensorflow as tf
 from abc import ABC, ABCMeta, abstractmethod
 from typing import Text
+import datetime
 
 from stockBot.__init__ import MODELPATH, TENSORBOARDPATH, DEFAULT_TENSORBOARDPATH
 from stockBot.agents.rewards import Reward_Strategy
@@ -26,7 +27,8 @@ class Neural_Network(ABC):
         self.model_name = None
         self.model = None
         self.build_model()
-        self._get_name_model()
+        self._get_simple_name_model()
+        self.tensorboard_log =  self._save_tensorboard_path%self.model_name + "/{}".format(datetime.datetime.now().strftime("%Y.%m.%d-%H:%M:%S"))
         self._launch_tensorboard()
 
     def fit(self, *args, **kwargs):
@@ -80,6 +82,18 @@ class Neural_Network(ABC):
             self.model_name += '%s->'%(layer.name.upper())
         self.model_name += '(%s)'%','.join(map(str,self.model.layers[-1].output_shape))
 
+    def _get_simple_name_model(self):
+        """
+            Compute the template name of the model
+        """
+        if not self.model:
+            raise NotImplementedError('Model not implemented')
+        self.model_name = "%s"%(self.__class__.__name__)
+        for layer in self.model.layers:
+            # self.model_name += '(%s)'%','.join(map(str, layer.input_shape))
+            self.model_name += '->%s'%(layer.name)
+        # self.model_name += '(%s)'%','.join(map(str,self.model.layers[-1].output_shape))
+
     def _launch_tensorboard(self):
         """
             Declare the TensorBoard
@@ -87,7 +101,36 @@ class Neural_Network(ABC):
         if not self.model_name:
             raise NotImplementedError('Model not implemented')
         # os.system("rm -r \"%s\""%(TENSORBOARDPATH%self.model_name))
-        self.tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir = self._save_tensorboard_path%self.model_name, histogram_freq=1)
+        self.writer = tf.summary.create_file_writer(self.tensorboard_log)
+        self.tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir = self.tensorboard_log, histogram_freq=1)
+
+    def _flush(function):
+        def wrapper(*args, **kwargs):
+            ret = function(*args, **kwargs)
+            args[0].writer.flush()
+            return ret
+        return wrapper
+
+    @_flush
+    def summary_scalar(self, name, tensor, step, tag=None):
+        @tf.function
+        def fun(name, tensor, step, tag=None):
+            with self.writer.as_default():
+                tf.summary.scalar(name, tensor, step=step, description=None)
+        if not isinstance(tensor, tf.Tensor):
+            tensor = tf.convert_to_tensor(tensor)
+        fun(name, tensor, step, tag=None)
+
+    @_flush
+    def summary_histogram(self, name, tensor, step, tag=None):
+        @tf.function
+        def fun(name, tensor, step, tag=None):
+            with self.writer.as_default():
+                tf.summary.histogram(name, tensor, step=step, description=None)
+        if not isinstance(tensor, tf.Tensor):
+            tensor = tf.convert_to_tensor(tensor)
+        fun(name, tensor, step, tag=None)
+
 
     def __str__(self):
         """
