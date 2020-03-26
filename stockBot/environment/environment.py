@@ -44,13 +44,13 @@ class TimeSeries_History(object):
 
 
 class Environment(gym.Env):
-    def __init__(self, broker:Broker, wallet:Wallet=None, action_strategy:Action_Strategy=None, data_streamer:Data_Streamer=None, reward_strategy:Reward_Strategy=None, **kwargs):
+    def __init__(self, broker:Broker, data_streamer:Data_Streamer, wallet:Wallet=None, action_strategy:Action_Strategy=None, reward_strategy:Reward_Strategy=None, **kwargs):
         super().__init__()
 
         self.broker          = broker
+        self.data_streamer   = data_streamer
         self.action_strategy = action_strategy or Simple_Action_Strategy()
         self.wallet          = wallet or self.broker.wallet
-        self.data_streamer   = data_streamer or Data_Streamer('SPCE')
         self.reward_strategy = reward_strategy or Simple_Reward_Strategy()
 
         self.look_back = kwargs.get('look_back', 5)
@@ -69,13 +69,15 @@ class Environment(gym.Env):
         self._actions_low       = self.action_strategy.low
         self._actions_high      = self.action_strategy.high
         self._actions_shape     = self.action_strategy.shape
+        self._n_actions         = self.action_strategy.n
         self._actions_dtype     = self.action_strategy.dtype
 
-        self.action_space       = Box(low   = self._actions_low,
+        self.box_action_space   = Box(low   = self._actions_low,
                                       high  = self._actions_high,
                                       shape = self._actions_shape,
                                       dtype = self._actions_dtype
                                       )
+        self.action_space       = Discrete(self._n_actions)
 
         self.history = {ticker_name:TimeSeries_History(self.look_back) for ticker_name in self.data_streamer.ticker_names}
 
@@ -90,6 +92,7 @@ class Environment(gym.Env):
         row, price = self.data_streamer.next(ticker_name)
 
         self.history[ticker_name].push(row)
+
         self.iter[ticker_name] += 1
 
         order = self.action_strategy.get_order(action)
@@ -106,7 +109,7 @@ class Environment(gym.Env):
         done = True if self.wallet.balance <= 0 or not self.data_streamer.has_next(ticker_name) else False
 
         info = {
-            'bite':'oui'
+            'bob':'dylan'
         }
 
         return state, reward, done, info

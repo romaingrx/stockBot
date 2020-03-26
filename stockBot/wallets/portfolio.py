@@ -41,17 +41,16 @@ class Portfolio:
     def __init__(self):
         self.current_balance  = 0.0
         self._portfolio = []
-        pass
 
     def find_ticker(self, ticker_name):
         """
             return the index of the ticker if it exists, else return None
         """
         index = -1
-        for index, stonk in enumerate(self._portfolio):
+        for i, stonk in enumerate(self._portfolio):
             if stonk.ticker_name == ticker_name:
-                break
-        return index if index+1 < len(self._portfolio) else -1
+                index = i
+        return index
 
     def get_quantity(self, ticker_name):
         index = self.find_ticker(ticker_name)
@@ -70,7 +69,9 @@ class Portfolio:
         if transaction.action == orderAction.BUY.value:
             last_price    = self._portfolio[index].price
             last_quantity = self._portfolio[index].quantity
+
             PRU = (last_price*last_quantity + transaction.price*transaction.quantity)/(last_quantity + transaction.quantity)
+
             self._portfolio[index].quantity += transaction.quantity
             self._portfolio[index].price     = PRU
             self.current_balance            += transaction.amount
@@ -100,5 +101,10 @@ class Portfolio:
             stonk.price = get_step_data(stonk.ticker_name, step)
             self.current_balance += (stonk.price-last_price)*stonk.quantity
 
+    def __len__(self):
+        return len(self._portfolio)
+
     def reset(self):
-        pass
+        del self._portfolio
+        self.current_balance  = 0.0
+        self._portfolio = []

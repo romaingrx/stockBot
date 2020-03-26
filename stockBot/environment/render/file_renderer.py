@@ -20,3 +20,6 @@ class File_Renderer(Renderer):
     def render(self, wallet:Wallet):
         update_str = str(wallet)
         self.fd.write(update_str)
+
+    def reset(self):
+        pass

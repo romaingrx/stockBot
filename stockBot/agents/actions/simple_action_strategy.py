@@ -16,7 +16,8 @@ class Simple_Action_Strategy(Action_Strategy):
 
     def __init__(self):
         self.actions = [orderAction.BUY, orderAction.SELL, None]
-        self.shape   = (len(self.actions),)
+        self.n       = len(self.actions)
+        self.shape   = (self.n,)
         self.dtype   = np.int32
         self.low     = 0
         self.high    = 2

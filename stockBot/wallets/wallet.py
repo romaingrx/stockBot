@@ -45,6 +45,7 @@ class Wallet:
         self.locked_balance = self._portfolio.current_balance
         self.balance = self.free_balance + self.locked_balance
 
+
     # TODO: représentation texte du Wallet
     def __str__(self):
         string  = 'Balance : \t\t%.2f\n'%self.balance

@@ -15,6 +15,25 @@ import datetime
 from stockBot.__init__ import MODELPATH, TENSORBOARDPATH, DEFAULT_TENSORBOARDPATH
 from stockBot.agents.rewards import Reward_Strategy
 
+# DECORATORS
+
+def _flush(function):
+    def wrapper(*args, **kwargs):
+        self = args[0]
+        ret = function(*args, **kwargs)
+        self.writer.flush()
+        return ret
+    return wrapper
+
+def neural_network_graph(function):
+    def wrapper(*args, **kwargs):
+        self = args[0]
+        with self.neural_network.writer.as_default():
+            return function(*args, **kwargs)
+    return wrapper
+
+# CLASSES
+
 class Neural_Network(ABC):
     """
         The skeleton of all neural networks with basics functions.
@@ -103,13 +122,6 @@ class Neural_Network(ABC):
         # os.system("rm -r \"%s\""%(TENSORBOARDPATH%self.model_name))
         self.writer = tf.summary.create_file_writer(self.tensorboard_log)
         self.tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir = self.tensorboard_log, histogram_freq=1)
-
-    def _flush(function):
-        def wrapper(*args, **kwargs):
-            ret = function(*args, **kwargs)
-            args[0].writer.flush()
-            return ret
-        return wrapper
 
     @_flush
     def summary_scalar(self, name, tensor, step, tag=None):

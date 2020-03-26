@@ -30,6 +30,9 @@ class Ledger:
         dtf.index_col='date'
         return dtf
 
+    def __len__(self):
+        return len(self._transactions)
+
     def __str__(self) -> Text:
         string  = "\n--- LEDGER ---\n"
         string += self.as_frame().to_string(index=False) if len(self._transactions) > 0 else "No transactions yet."

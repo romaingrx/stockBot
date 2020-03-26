@@ -9,4 +9,5 @@ from stockBot.agents.models.model_base import Neural_Network
 from stockBot.agents.models.model_base import Reinforcement_Network
 from stockBot.agents.models.LSTM import naive_LSTM_Network
 from stockBot.agents.models.DQN import Deep_Q_Learning
-from stockBot.agents.models.DQN import DQNTransition 
+from stockBot.agents.models.DQN import DQNTransition
+from .model_base import neural_network_graph
