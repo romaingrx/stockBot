@@ -11,31 +11,22 @@ import tensorflow as tf
 
 
 from stockBot.wallets import Portfolio, Transaction
-from .models import Neural_Network, Deep_Q_Learning, DQNTransition, neural_network_graph
-from .rewards import Reward_Strategy, Simple_Reward_Strategy
-from .memory import Memory
-from .actions import Action_Strategy, Simple_Action_Strategy
+from stockBot.agents.models import Neural_Network, Deep_Q_Learning, DQNTransition, neural_network_graph
+from stockBot.agents.rewards import Reward_Strategy, Simple_Reward_Strategy
+from stockBot.agents.memory import Memory
+from stockBot.agents.actions import Action_Strategy, Simple_Action_Strategy
 from stockBot.data import Data_Streamer
 from stockBot.wallets import Wallet
 from stockBot.brokers import Broker, Fake_Broker
 from stockBot.environment import Environment
 from stockBot.utils import timer
+from .agent_base import Agent
+class DQNAgent(Agent):
 
-class Agent():
-
-    def __init__(self, tickers:Text or List[Text], initial_balance=None, broker:Broker=None, wallet:Wallet=None, env:Environment=None, data_streamer:Data_Streamer=None, neural_network:Neural_Network=None, reward_strategy:Reward_Strategy=None, action_strategy:Action_Strategy=None):
-        self._tickers = tickers if isinstance(tickers, list) else [tickers]
-        self._initial_balance = initial_balance
-        self.broker           = broker if isinstance(broker, Broker) else Fake_Broker(self._initial_balance)
-        self.data_streamer    = data_streamer or Data_Streamer(tickers)
-        self.wallet           = wallet or self.broker.wallet
-        self.action_strategy  = action_strategy or Simple_Action_Strategy()
-        self.env              = env or Environment(self.broker, self.data_streamer, action_strategy=self.action_strategy)
-        self.neural_network   = neural_network or Deep_Q_Learning(self.env.observation_space.shape)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.target_network   = tf.keras.models.clone_model(self.neural_network.model)
         self.target_network.trainable = False
-        self.reward_strategy  = reward_strategy or Simple_Reward_Strategy()
-
 
     def train(self, data=None, reward_strategy:Reward_Strategy=None, epochs:int=None, batch_size:int=128, memory_capacity:int=1000, learning_rate:float=0.001, discount_factor:float=0.05, max_steps:Optional=None, update_target_every:int=None) -> List[float]:
 

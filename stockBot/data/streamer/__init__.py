@@ -4,7 +4,6 @@
 @author : Romain Graux
 @date : Monday, 23 March 2020
 """
-
 from stockBot.data.streamer.streamer import Streamer
 from stockBot.data.streamer.yfinance.streamer import Yfinance_Streamer
 from stockBot.data.streamer.alpha_vantage.streamer import Alpha_Vantage_Streamer

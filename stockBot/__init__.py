@@ -7,7 +7,9 @@
 
 # from . import agents, models, rewards, preprocess, evaluate, visualizer
 
-import os, datetime, matplotlib.pyplot as plt
+import os, sys, datetime, matplotlib.pyplot as plt
+cwd = os.path.abspath(os.getcwd())
+sys.path.append(cwd)
 
 # # # # # # #
 # VARIABLES #
@@ -23,7 +25,7 @@ PROJECTPATH              = os.path.abspath(os.path.dirname(__file__))
 MODELPATH                = PROJECTPATH + "/../res/models/%s"
 TENSORBOARDPATH          = PROJECTPATH + "/../res/tensorboards/%s"
 DEFAULT_TENSORBOARDPATH  = PROJECTPATH + "/../res/tensorboards/" + datetime.datetime.now().strftime("%Y/%m/%d-%H.%M.%S")
-
+CONFIG_FILE              = PROJECTPATH + "/.config.json"
 
 # # # # # # #
 # SETTINGS  #

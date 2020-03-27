@@ -44,7 +44,7 @@ class TimeSeries_History(object):
 
 
 class Environment(gym.Env):
-    def __init__(self, broker:Broker, data_streamer:Data_Streamer, wallet:Wallet=None, action_strategy:Action_Strategy=None, reward_strategy:Reward_Strategy=None, **kwargs):
+    def __init__(self, data_streamer:Data_Streamer, broker:Broker=None, wallet:Wallet=None, action_strategy:Action_Strategy=None, reward_strategy:Reward_Strategy=None, **kwargs):
         super().__init__()
 
         self.broker          = broker

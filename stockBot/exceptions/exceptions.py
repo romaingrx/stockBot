@@ -38,3 +38,17 @@ class NotEnoughBalanceError(Exception):
 class StreamerSourceError(defaultTypeError):
     def __init__(self, notCorrect, *args, **kwargs):
         super().__init__("streamerSource", notCorrect, *args, **kwargs)
+
+# Config
+class KeyNotConfiguredError(Exception):
+    def __init__(self, string, *args, **kwargs):
+        string = string or "for Quandl or AlphaVantage"
+        super.__init__("API Key %s not configured, instructions for setting keys are in the README."%(string), *args, **kwargs)
+
+class AlphaVantageKeyNotConfiguredError(KeyNotConfiguredError):
+    def __init__(self, *args, **kwargs):
+        super().__init__('AlphaVantage'*args, **kwargs)
+
+class QuandlKeyNotConfiguredError(KeyNotConfiguredError):
+    def __init__(self, *args, **kwargs):
+        super().__init__('AlphaVantage'*args, **kwargs)
