@@ -5,5 +5,4 @@
 @date : Monday, 23 March 2020
 """
 
-from .types import orderAction, orderType, orderTime
-from .types import streamerSource
+from .streamer import Alpha_Vantage_Streamer

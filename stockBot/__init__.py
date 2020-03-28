@@ -5,11 +5,7 @@
 @date : Saturday, 21 March 2020
 """
 
-# from . import agents, models, rewards, preprocess, evaluate, visualizer
-
 import os, sys, datetime, matplotlib.pyplot as plt
-cwd = os.path.abspath(os.getcwd())
-sys.path.append(cwd)
 
 # # # # # # #
 # VARIABLES #

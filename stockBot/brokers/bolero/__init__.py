@@ -4,3 +4,5 @@
 @author : Romain Graux
 @date : Tuesday, 24 March 2020
 """
+
+from .bolero import Bolero

@@ -6,7 +6,7 @@
 """
 
 from stockBot.brokers import Broker
-from stockBot.wallets import Transaction
+from stockBot.finance import Transaction
 
 class Degiro(Broker):
 

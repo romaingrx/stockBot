@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 @author : Romain Graux
-@date : Saturday, 21 March 2020
+@date : Sunday, 22 March 2020
 """
 
-from .degiro import Degiro
+from .memory import Memory

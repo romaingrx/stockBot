@@ -26,10 +26,3 @@ def df_preprocess_yfinance(df):
     MACD = df['Close'].rolling(window='12d').mean() - df['Close'].rolling(window='26d').mean()
     df['MACD-Signal'] = MACD - MACD.rolling(window='9d').mean()
     return df
-
-class df_to_timeseries:
-
-    @staticmethod
-    def compute(df, length):
-        assert isinstance(df, pd.DataFrame)
-        pass
