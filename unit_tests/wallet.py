@@ -12,6 +12,7 @@ from stockBot.finance import Wallet, Transaction
 import unittest
 import pandas as pd
 import numpy as np
+import random
 
 initial_balance = 1000
 
@@ -33,7 +34,8 @@ class Wallet_Test(unittest.TestCase):
         self.assertEqual(initial_balance, wallet.balance)
         self.assertTrue(len(wallet._portfolio) == 0)
         self.assertTrue(len(wallet._ledger) == 0)
-    def test_contenu_ledger(self):
+
+    def test_groupement_portfolio(self):
         wallet = Wallet(initial_balance)
         transaction1 = Transaction('SPCE', 'buy', 10, 10.00)
         wallet.push(transaction1)
@@ -47,6 +49,31 @@ class Wallet_Test(unittest.TestCase):
         self.assertTrue(df['ticker_name'].values[1]=='TSLA')
         self.assertTrue(wallet._portfolio._portfolio[0].quantity == 10)
         self.assertTrue(wallet._portfolio._portfolio[1].quantity == 1)
+        wallet.push(transaction3)
+        self.assertEqual(len(wallet._portfolio._portfolio),1)
+
+    def test_balances(self):
+        wallet = Wallet(initial_balance)
+        tickers = ['SPCE','TSLA','BCART','AA','AAA']
+        for t in tickers:
+            i = random.uniform(0.00, 25.00)
+            wallet.push(Transaction(t, 'buy', 10, i))
+            self.assertEqual(wallet.balance, wallet.free_balance+wallet.locked_balance)
+            # print(wallet)
+        self.assertTrue(len(wallet._ledger._transactions) == len(tickers))
+
+        self.assertTrue(wallet.balance == wallet.free_balance + wallet.locked_balance)
+
+        #Checking whether quantities are right whilst selling higher
+        i = 0
+        for t in tickers:
+            n = random.uniform(25.00,50.00)
+            wallet.push(Transaction(t, 'sell', 5, n))
+            self.assertEqual(wallet._portfolio._portfolio[i].quantity, 5)
+            i+= 1
+        self.assertTrue(wallet.balance >= initial_balance)
+
+
 
 
 if __name__=='__main__':
