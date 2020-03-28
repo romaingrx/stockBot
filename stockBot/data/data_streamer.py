@@ -24,20 +24,24 @@ class Data_Streamer:
         self.Streamer = streamer_mapper[self.src](self.ticker_names, self._api_key)
         self.DataFrames = self.Streamer.DataFrames
         self.n_features = self.DataFrames[self.ticker_names[0]].shape[1]
-        self.iter = 0
+        self.iter = {ticker_name:0 for ticker_name in self.ticker_names}
 
     def has_next(self, ticker_name):
-        return True if self.iter<len(self.DataFrames[ticker_name]) else False
+        return True if self.iter[ticker_name]<len(self.DataFrames[ticker_name]) else False
 
     def next(self, ticker_name):
         if not self.has_next(ticker_name):
             raise IndexError()
-        row = self.DataFrames[ticker_name].iloc[self.iter]
-        self.iter += 1
+        row = self.DataFrames[ticker_name].iloc[self.iter[ticker_name]]
+        self.iter[ticker_name] += 1
         return row, row['Close']
 
+    def reset_ticker(self, ticker_name):
+        self.iter[ticker_name] = 0
+
     def reset(self):
-        self.iter = 0
+        for ticker_name in self.ticker_names:
+            self.iter[ticker_name] = 0
 
 already_downloaded = {}
 

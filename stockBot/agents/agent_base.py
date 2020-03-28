@@ -19,7 +19,7 @@ from stockBot.finance import Wallet
 
 class Agent(ABC):
 
-    def __init__(self, tickers:Text or List[Text]=None, initial_balance=None, broker:Broker=None, wallet:Wallet=None, env:Environment=None, data_streamer:Data_Streamer=None, neural_network:Neural_Network=None, reward_strategy:Reward_Strategy=None, action_strategy:Action_Strategy=None):
+    def __init__(self, tickers:Text or List[Text]=None, initial_balance=None, broker:Broker=None, wallet:Wallet=None, env:Environment=None, data_streamer:Data_Streamer=None, neural_network:Neural_Network=None, reward_strategy:Reward_Strategy=None, action_strategy:Action_Strategy=None, load_name=None):
         self._tickers         = tickers if isinstance(tickers, list) else [tickers]
         self._initial_balance = initial_balance
         self.broker           = broker if isinstance(broker, Broker) else Fake_Broker(Wallet(self._initial_balance))
@@ -28,7 +28,7 @@ class Agent(ABC):
         self.action_strategy  = action_strategy or Simple_Action_Strategy()
         self.reward_strategy  = reward_strategy or Simple_Reward_Strategy()
         self.env              = env or Environment(data_streamer=self.data_streamer, broker=self.broker, action_strategy=self.action_strategy, reward_strategy=self.reward_strategy)
-        self.neural_network   = neural_network if isinstance(neural_network, Neural_Network) else Deep_Q_Learning(self.env.observation_space.shape)
+        self.neural_network   = neural_network if isinstance(neural_network, Neural_Network) else Deep_Q_Learning(input_shape=self.env.observation_space.shape, output_size=self.env.action_space.n, load_name=load_name)
 
     def train(self, reward_strategy:Reward_Strategy=None, epochs:int=None, batch_size:int=128, memory_capacity:int=1000, learning_rate:float=0.001, discount_factor:float=0.05, max_steps:Optional=None, update_target_every:int=None) -> List[float]:
         raise NotImplementedError('train not implemented')

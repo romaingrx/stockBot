@@ -40,6 +40,7 @@ class DQNAgent(Agent):
 
         default_ticker_name = self.data_streamer.ticker_names[0]
 
+
         while episode < epochs:
             state = self.env.reset(default_ticker_name)
             self.wallet.reset()
@@ -56,13 +57,16 @@ class DQNAgent(Agent):
 
                 next_state, reward, done, info = self.env.step(decision, default_ticker_name)
 
+                if steps % 100 == 0:
+                    print('episode %d ,step %d'%(episode, steps))
+                    print(info)
+
                 memory.push(state, decision, reward, next_state, done)
 
                 state = next_state
                 total_reward += reward
                 rewards.append(reward)
                 balance_values.append(self.wallet.balance)
-
 
                 steps += 1
 
@@ -79,6 +83,7 @@ class DQNAgent(Agent):
                     done = True
 
                 # self.env.render(episode)
+
             mean_loss    = np.mean(loss_values)
             mean_balance = np.mean(balance_values)
             mean_reward  = np.mean(rewards)
@@ -89,10 +94,10 @@ class DQNAgent(Agent):
             print('Epoch %d/%d'%(episode, epochs))
             print('loss %.3f - balance %.2f - reward %.3f'%(mean_loss, mean_balance, mean_reward))
 
-            if episode == epochs - 1:
-                self.neural_network.save(episode)
-
             episode += 1
+
+            if episode == epochs:
+                self.neural_network.save_model(episode=self.neural_network.initial_episode + epochs)
 
         return rewards
 

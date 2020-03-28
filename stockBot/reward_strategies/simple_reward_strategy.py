@@ -13,7 +13,8 @@ class Simple_Reward_Strategy(Reward_Strategy):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def _get_reward(self, wallet:Wallet) -> float:
+    def _get_reward(self, wallet:Wallet, history_capacity=None) -> float:
+        
         diff = wallet.balance - wallet.initial_balance
         reward = diff / wallet.initial_balance
         return reward

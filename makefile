@@ -12,3 +12,6 @@ export:
 			echo 'Impossible to export stockBot'
 		fi
 	fi
+
+test: unit_tests
+	python unit_tests

@@ -7,10 +7,11 @@
 
 import os
 import logging
+import fnmatch
+import datetime
+from typing import Text
 import tensorflow as tf
 from abc import ABC, ABCMeta, abstractmethod
-from typing import Text
-import datetime
 
 from stockBot.reward_strategies import Reward_Strategy
 from stockBot import MODELPATH, TENSORBOARDPATH, DEFAULT_TENSORBOARDPATH
@@ -39,13 +40,17 @@ class Neural_Network(ABC):
         The skeleton of all neural networks with basics functions.
     """
 
-    def __init__(self, input_shape, save_model_path:Text=None, save_tensorboard_path:Text=None):
+    def __init__(self, input_shape=None, load_name=False, save_model_path:Text=None, save_tensorboard_path:Text=None):
         self._save_model_path = save_model_path or MODELPATH
         self._save_tensorboard_path = save_tensorboard_path or TENSORBOARDPATH
         self.input_shape = input_shape
         self.model_name = None
         self.model = None
-        self.build_model()
+        self.initial_episode = 0
+        if load_name:
+            self.load_model(load_name)
+        else:
+            self.build_model()
         self._get_simple_name_model()
         self.tensorboard_log =  self._save_tensorboard_path%self.model_name + "/{}".format(datetime.datetime.now().strftime("%Y.%m.%d-%H:%M:%S"))
         self._launch_tensorboard()
@@ -76,13 +81,19 @@ class Neural_Network(ABC):
         self.model.save(self._save_model_path%(self.model_name+extension))
         return None
 
-    def load_model(self):
+    def load_model(self, name=None):
         """
             Load the model from .h5 format in ./res/models/
         """
-        if not self.model_name:
-            raise NotImplementedError('Model not implemented')
-        self.model = tf.keras.models.load_model(self._save_model_path%(self.model_name+".h5"))
+        split_under = name.split('_')
+        extension = split_under[-1]
+        number = extension.split('.')[0]
+        try:
+            number = int(number)
+            self.initial_episode = number
+        except:
+            pass
+        self.model = tf.keras.models.load_model(self._save_model_path%name)
         return None
 
     @abstractmethod
@@ -157,9 +168,9 @@ class Neural_Network(ABC):
 
 class Reinforcement_Network(Neural_Network):
 
-    def __init__(self, input_shape, layer_size):
+    def __init__(self, *args, layer_size=None, **kwargs):
         self.layer_size = layer_size
-        super().__init__(input_shape)
+        super().__init__(*args, **kwargs)
 
     @abstractmethod
     def act(self, state, epsilon, **kwargs):

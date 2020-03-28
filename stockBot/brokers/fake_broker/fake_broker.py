@@ -15,7 +15,6 @@ class Fake_Broker(Broker):
 
     def __init__(self, wallet:Wallet):
         self.wallet = wallet
-        pass
 
     def commit_order(self, transaction:Transaction):
         if transaction.action == orderAction.BUY.value:

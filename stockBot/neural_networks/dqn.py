@@ -18,13 +18,12 @@ DQNTransition = namedtuple('DQNTransition', ['state', 'action', 'reward', 'next_
 
 class Deep_Q_Learning(Reinforcement_Network):
 
-    def __init__(self, input_shape, look_back=15, layer_size=200, decision_size=3):
-        self.look_back = look_back
-        self.decision_size = decision_size
-        super().__init__(input_shape, layer_size)
+    def __init__(self, input_shape=None, layer_size=200, load_name=None, output_size=None):
+        self.output_size = output_size
+        super().__init__(input_shape=input_shape, layer_size=layer_size, load_name=load_name)
 
     def build_model(self, distribution='random_normal', bias='zeros'):
-        self.input_layer    = tf.keras.Input(shape=self.input_shape, name='input')
+        self.input_layer    = tf.keras.Input(shape=self.input_shape, name='input', dtype='float32')
         self.conv1d         = tf.keras.layers.Conv1D(filters=64,
                                            kernel_size=6,
                                            padding='same',
@@ -35,7 +34,7 @@ class Deep_Q_Learning(Reinforcement_Network):
                                            kernel_initializer=distribution,
                                            bias_initializer=bias,
                                            name='feed')(self.flatten)
-        self.decision_layer = tf.keras.layers.Dense(self.decision_size,
+        self.decision_layer = tf.keras.layers.Dense(self.output_size,
                                            kernel_initializer=distribution,
                                            bias_initializer=bias,
                                            name='decision')(self.feed_layer)
@@ -45,7 +44,7 @@ class Deep_Q_Learning(Reinforcement_Network):
 
     def act(self, state, epsilon=0):
         if epsilon > random.random():
-            return np.random.choice(self.decision_size)
+            return np.random.choice(self.output_size)
         else:
             decision = self.predict(np.expand_dims(state, 0))
             return np.argmax(decision)

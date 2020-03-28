@@ -17,11 +17,10 @@ TESTSIZE     = 0.2 # Size of seperation between train and validation data
 # FIXED VARIABLES #
 # # # # # # # # # #
 
-PROJECTPATH              = os.path.abspath(os.path.dirname(__file__))
-MODELPATH                = PROJECTPATH + "/../res/models/%s"
-TENSORBOARDPATH          = PROJECTPATH + "/../res/tensorboards/%s"
-DEFAULT_TENSORBOARDPATH  = PROJECTPATH + "/../res/tensorboards/" + datetime.datetime.now().strftime("%Y/%m/%d-%H.%M.%S")
-CONFIG_FILE              = PROJECTPATH + "/.config.json"
+PROJECTPATH              = os.path.abspath(os.getcwd())
+MODELPATH                = PROJECTPATH + "/res/models/%s"
+TENSORBOARDPATH          = PROJECTPATH + "/res/tensorboards/%s"
+DEFAULT_TENSORBOARDPATH  = PROJECTPATH + "/res/tensorboards/" + datetime.datetime.now().strftime("%Y/%m/%d-%H.%M.%S")
 
 # # # # # # #
 # SETTINGS  #

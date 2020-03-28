@@ -59,5 +59,6 @@ class Wallet:
     def reset(self):
             self._ledger.reset()
             self._portfolio.reset()
+            self.balance = self.initial_balance
             self.free_balance = self.initial_balance
             self.locked_balance = 0.0

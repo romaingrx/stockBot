@@ -43,6 +43,9 @@ class TimeSeries_History(object):
         del self.df
         self.df = pd.DataFrame()
 
+    def __del__(self):
+        del self.df
+
 
 class Environment(gym.Env):
     def __init__(self, data_streamer:Data_Streamer, broker:Broker=None, wallet:Wallet=None, action_strategy:Action_Strategy=None, reward_strategy:Reward_Strategy=None, **kwargs):
@@ -54,11 +57,11 @@ class Environment(gym.Env):
         self.wallet          = wallet or self.broker.wallet
         self.reward_strategy = reward_strategy or Simple_Reward_Strategy()
 
-        self.look_back = kwargs.get('look_back', 5)
+        self.history_capacity = kwargs.get('history_capacity', 5)
 
         self._observation_low   = kwargs.get('obesrvations_lows', -np.iinfo(np.int32).max)
         self._observation_max   = kwargs.get('obesrvations_maxs', np.iinfo(np.int32).max)
-        self._observation_shape = (self.look_back, self.data_streamer.n_features)
+        self._observation_shape = (self.history_capacity, self.data_streamer.n_features)
         self._observation_dtype = kwargs.get('obesrvations_lows', np.int32)
 
         self.observation_space  = Box(low   = self._observation_low,
@@ -80,9 +83,9 @@ class Environment(gym.Env):
                                       )
         self.action_space       = Discrete(self._n_actions)
 
-        self.history = {ticker_name:TimeSeries_History(self.look_back) for ticker_name in self.data_streamer.ticker_names}
+        self.history = {ticker_name:TimeSeries_History(self.history_capacity) for ticker_name in self.data_streamer.ticker_names}
 
-        self.iter    = {ticker_name:i for ticker_name, i in zip(self.data_streamer.ticker_names, [0]*len(self.data_streamer.ticker_names))}
+        self.iter    = {ticker_name:0 for ticker_name in self.data_streamer.ticker_names}
 
     # TODO
     def render(self, episode):
@@ -94,11 +97,17 @@ class Environment(gym.Env):
 
         self.history[ticker_name].push(row)
 
+        if self.iter[ticker_name] in [0]:
+            print('\n---- RESET BALANCE       : %.2f'%(self.broker.wallet.balance))
+            print(  '---- RESET LEN PORTFOLIO : %.2f'%(len(self.broker.wallet._portfolio)))
+            print(  '---- RESET LEN LEDGER    : %.2f\n'%(len(self.broker.wallet._ledger)))
+
         self.iter[ticker_name] += 1
 
         order = self.action_strategy.get_order(action)
 
         self.broker.update(ticker_name, self.iter[ticker_name])
+
         if order:
             transaction = Transaction(ticker_name, order, 10, price, 0.0)
             self.broker.commit_order(transaction)
@@ -110,8 +119,10 @@ class Environment(gym.Env):
         done = True if self.wallet.balance <= 0 or not self.data_streamer.has_next(ticker_name) else False
 
         info = {
-            'bob':'dylan'
-        }
+            'wallet balance':self.broker.wallet.balance,
+            'percentage active actions':'%.2f'%(100*(self.broker.wallet.locked_balance/self.broker.wallet.balance)),
+            'number of actions':len(self.broker.wallet._portfolio)
+            }
 
         return state, reward, done, info
 
@@ -126,3 +137,10 @@ class Environment(gym.Env):
         state = self.history[ticker_name].get()
 
         return state
+
+    def __del__(self):
+        del self.box_action_space
+        del self.observation_space
+        del self.action_space
+        del self.iter
+        del self.history
