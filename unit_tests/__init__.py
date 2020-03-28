@@ -5,6 +5,10 @@
 @date : Thursday, 26 March 2020
 """
 
+import os
 import sys
-sys.path.append('../stockBot')
-print(sys.path)
+
+PROJECTPATH = os.getcwd()
+
+def imp():
+    sys.path.append(PROJECTPATH)

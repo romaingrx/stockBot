@@ -5,9 +5,10 @@
 @date : Thursday, 26 March 2020
 """
 
-import sys
-sys.path.append('../stockBot')
-from stockBot.wallets import Wallet, Transaction
+from __init__ import PROJECTPATH, sys
+sys.path.append(PROJECTPATH)
+
+from stockBot.finance import Wallet, Transaction
 import unittest
 
 initial_balance = 1000
