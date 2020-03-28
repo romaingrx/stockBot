@@ -9,4 +9,4 @@ import sys
 import os
 
 if sys.version_info.major != 3:
-    raise NotImplementedError("TensorTrade is only compatible with Python 3.")
+    raise NotImplementedError("stockBot only works with python 3!")
