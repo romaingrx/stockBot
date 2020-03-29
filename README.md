@@ -29,7 +29,7 @@ How to run scripts
     - If everything went well, you can restart your terminal and you're done.
     - After restarting your terminal, you can check if the keys are set with:
     ```shell
-        python --config --check
+        python stockBot --config --check
     ```
 
 Then you are able to execute scripts that are in the examples folder
