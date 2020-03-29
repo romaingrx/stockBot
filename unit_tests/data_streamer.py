@@ -31,6 +31,14 @@ class Data_Streamer_Test(unittest.TestCase):
             data_streamer.reset_ticker(ticker_name)
             self.assertEqual(data_streamer.iter[ticker_name], 0)
 
+    def test_minmax(self):
+        tickers = ['SPCE','TSLA','AAPL']
+        data_streamer = Data_Streamer(tickers)
+        for ticker_name, df in data_streamer.DataFrames.items():
+            n = df.to_numpy()
+            eps= 10E-8
+            self.assertTrue((n<=1+eps).all())
+            self.assertTrue((n>=0-eps).all())
 
     def test_hard_reset(self):
         tickers = ['SPCE', 'TSLA']

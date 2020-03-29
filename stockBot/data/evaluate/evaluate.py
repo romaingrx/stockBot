@@ -52,6 +52,7 @@ def prediction_cross_correlation(real_data, test_data):
     plt.xcorr(df_intersect.values, test_data.values, usevlines=True, normed=True)
 
 
+
 if __name__=='__main__':
     from preprocess import df_preprocess_alpha_vantage
     SPCE = TS.get_intraday(symbol='SPCE', outputsize='full', interval='30min')[0]

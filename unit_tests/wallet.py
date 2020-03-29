@@ -14,6 +14,10 @@ import pandas as pd
 import numpy as np
 import random
 
+BUY_tr  = Transaction('SPCE', 'buy', 1, 10.14)
+SELL_tr = Transaction('SPCE', 'sell', 1, 11.14)
+
+
 initial_balance = 1000
 
 class Wallet_Test(unittest.TestCase):
@@ -34,6 +38,17 @@ class Wallet_Test(unittest.TestCase):
         self.assertEqual(initial_balance, wallet.balance)
         self.assertTrue(len(wallet._portfolio) == 0)
         self.assertTrue(len(wallet._ledger) == 0)
+
+    def test_profit(self):
+        wallet = Wallet(initial_balance)
+        wallet.push(BUY_tr)
+        wallet.push(SELL_tr)
+        self.assertEqual(wallet.balance, initial_balance+1)
+        wallet.reset()
+        wallet.push(BUY_tr)
+        wallet.push(BUY_tr)
+        wallet.push(SELL_tr)
+        self.assertEqual(wallet.balance, initial_balance+1)
 
     def test_groupement_portfolio(self):
         wallet = Wallet(initial_balance)

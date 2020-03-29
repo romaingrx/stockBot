@@ -36,6 +36,10 @@ class Portfolio_Test(unittest.TestCase):
         portfolio.push(buy_transaction)
         portfolio.push(sell_transaction)
         self.assertEqual(portfolio.current_balance, 0)
+        portfolio.push(buy_transaction)
+        portfolio.push(buy_transaction)
+        portfolio.push(sell_transaction)
+        self.assertEqual(portfolio.current_balance, 100)
 
     def test_savage(self):
         n = 999

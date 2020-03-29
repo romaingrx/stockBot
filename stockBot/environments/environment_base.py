@@ -10,6 +10,7 @@ import numpy as np
 import pandas as pd
 from typing import Text
 from gym.spaces import Discrete, Box
+import time
 
 from stockBot.brokers import Broker
 from stockBot.data import Data_Streamer
@@ -58,6 +59,8 @@ class Environment(gym.Env):
         self.reward_strategy = reward_strategy or Simple_Reward_Strategy()
 
         self.history_capacity = kwargs.get('history_capacity', 5)
+        self.reward_strategy.history_capacity = self.history_capacity
+
 
         self._observation_low   = kwargs.get('obesrvations_lows', -np.iinfo(np.int32).max)
         self._observation_max   = kwargs.get('obesrvations_maxs', np.iinfo(np.int32).max)
@@ -109,7 +112,8 @@ class Environment(gym.Env):
         self.broker.update(ticker_name, self.iter[ticker_name])
 
         if order:
-            transaction = Transaction(ticker_name, order, 10, price, 0.0)
+            max_actions = np.floor(self.broker.wallet.free_balance/price)
+            transaction = Transaction(ticker_name, order, max(0, max_actions-1), price, 0.0)
             self.broker.commit_order(transaction)
 
         state = self.history[ticker_name].get()
@@ -120,8 +124,10 @@ class Environment(gym.Env):
 
         info = {
             'wallet balance':self.broker.wallet.balance,
-            'percentage active actions':'%.2f'%(100*(self.broker.wallet.locked_balance/self.broker.wallet.balance)),
-            'number of actions':len(self.broker.wallet._portfolio)
+            'percentage locked balance':'%.2f'%(100*(self.broker.wallet.locked_balance/self.broker.wallet.balance)),
+            'number of active tickers':len(self.broker.wallet._portfolio),
+            'number of actions':self.broker.wallet._portfolio.get_quantity(ticker_name),
+            'reward':reward
             }
 
         return state, reward, done, info

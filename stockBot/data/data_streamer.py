@@ -21,8 +21,9 @@ class Data_Streamer:
             raise StreamerSourceError(src)
         self.src = src.value if isinstance(src, streamerSource) else src
         self.ticker_names = tickers if isinstance(tickers, list) else [tickers]
-        self.Streamer = streamer_mapper[self.src](self.ticker_names, self._api_key)
+        self.Streamer = streamer_mapper[self.src](self.ticker_names)
         self.DataFrames = self.Streamer.DataFrames
+        self.prices_rows = self.Streamer.prices_rows
         self.n_features = self.DataFrames[self.ticker_names[0]].shape[1]
         self.iter = {ticker_name:0 for ticker_name in self.ticker_names}
 
@@ -30,11 +31,14 @@ class Data_Streamer:
         return True if self.iter[ticker_name]<len(self.DataFrames[ticker_name]) else False
 
     def next(self, ticker_name):
+        """
+            Return the next row with all features and the price at the good step
+        """
         if not self.has_next(ticker_name):
             raise IndexError()
-        row = self.DataFrames[ticker_name].iloc[self.iter[ticker_name]]
+        iter = self.iter[ticker_name]
         self.iter[ticker_name] += 1
-        return row, row['Close']
+        return self.DataFrames[ticker_name].iloc[iter], self.prices_rows[ticker_name].values[iter]
 
     def reset_ticker(self, ticker_name):
         self.iter[ticker_name] = 0

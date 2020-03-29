@@ -28,7 +28,20 @@ class Environment_Test(unittest.TestCase):
             state = env.step(0, ticker)
             data_streamer.reset()
             del env
-    
+    def test_reset(self):
+        tickers = ['SPCE', 'TSLA', 'AAPL']; initial_balance = 1000
+        broker = Fake_Broker(Wallet(initial_balance))
+        data_streamer = Data_Streamer(tickers)
+        env = Environment(data_streamer, broker)
+        for ticker_name in tickers:
+            for i in range(10):
+                state = env.step(2, ticker_name)
+            env.reset(ticker_name)
+            self.assertEqual(env.iter[ticker_name], 0)
+        del data_streamer
+        del env
+
+
 
 
 if __name__=='__main__':

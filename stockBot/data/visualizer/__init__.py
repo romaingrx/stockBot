@@ -4,3 +4,5 @@
 @author : Romain Graux
 @date : Saturday, 21 March 2020
 """
+
+from visualizer import *

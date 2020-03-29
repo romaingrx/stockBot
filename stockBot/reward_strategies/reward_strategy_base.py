@@ -16,12 +16,22 @@ def reward_function(function):
 
 class Reward_Strategy(ABC):
 
-    def __init__(self):
-        pass
+    def __init__(self, history_capacity=2, **kwargs):
+        self.history_capacity = history_capacity
+
+    @property
+    def history_capacity(self):
+        return self._history_capacity
+
+    @history_capacity.setter
+    def history_capacity(self, value):
+        assert value >= 0
+        self._history_capacity = value
 
     @reward_function
     def get_reward(self, *args, **kwargs):
         return self._get_reward(*args, **kwargs)
+
     @abstractmethod
     def _get_reward(self):
         raise NotImplementedError("get_reward not implemented")
