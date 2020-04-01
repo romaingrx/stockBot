@@ -13,25 +13,23 @@ from .transactions import Transaction
 class Ledger:
 
     def __init__(self):
-        self._transactions = []
+        self._transactions = pd.DataFrame()
 
     def push(self, transaction:Transaction):
-        self._transactions += [transaction]
+        self._transactions = self._transactions.append(transaction.as_dict(), ignore_index=True)
 
     def transactions(self) -> List[Transaction]:
         return self._transactions
 
     def reset(self):
         del self._transactions
-        self._transactions = []
+        self._transactions = pd.DataFrame()
 
     def as_frame(self) -> pd.DataFrame:
-        dtf = pd.DataFrame([transaction.as_dict() for transaction in self._transactions])
-        dtf.index_col='date'
-        return dtf
+        return self._transactions
 
     def __len__(self):
-        return len(self._transactions)
+        return len(self._transactions.index)
 
     def __str__(self) -> Text:
         string  = "\n--- LEDGER ---\n"

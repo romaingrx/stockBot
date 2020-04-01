@@ -6,3 +6,4 @@
 """
 
 from .environment_base import Environment
+from .continuous_environment import Continuous_Environment

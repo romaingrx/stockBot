@@ -9,9 +9,12 @@ from stockBot.finance import Wallet
 from stockBot.brokers import Fake_Broker
 from stockBot.agents import DQNAgent
 from stockBot.data import Data_Streamer
+from stockBot.environments import Continuous_Environment
 
-ticker = 'SPCE'
+tickers = 'TSLA'
 initial_balance = 1000
 
-agent = DQNAgent(ticker, initial_balance)
+history_capacity = 30
+
+agent = DQNAgent(tickers, initial_balance, load_name=None, random=False)
 agent.train()

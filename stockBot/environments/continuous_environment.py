@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 @author : Romain Graux
-@date : Sunday, 22 March 2020
+@date : Monday, 30 March 2020
 """
 
 import gym
@@ -22,7 +22,7 @@ from stockBot.reward_strategies import Reward_Strategy, Simple_Reward_Strategy
 from stockBot.action_strategies import Action_Strategy, Simple_Action_Strategy
 
 
-class Environment(gym.Env):
+class Continuous_Environment(gym.Env):
     def __init__(self, data_streamer:Data_Streamer, broker:Broker=None, wallet:Wallet=None, action_strategy:Action_Strategy=None, reward_strategy:Reward_Strategy=None, renderer:Renderer=None, **kwargs):
         super().__init__()
 
@@ -35,6 +35,7 @@ class Environment(gym.Env):
 
         self.history_capacity = kwargs.get('history_capacity', 30)
         self.reward_strategy.history_capacity = self.history_capacity
+        self.max_steps = kwargs.get('max_steps', 5*365)
 
 
         self._observation_low   = kwargs.get('obesrvations_lows', -np.iinfo(np.int32).max)
@@ -65,14 +66,17 @@ class Environment(gym.Env):
 
         self.iter    = {ticker_name:0 for ticker_name in self.data_streamer.ticker_names}
 
+    # TODO
     def render(self):
-        self.renderer.render(self.wallet)
+        self.renderer.render(self.wallet, self.data_streamer.prices_rows['TSLA'][self.data_streamer.iter['TSLA']])
 
     # TODO
     def step(self, action, ticker_name):
         date, row, price = self.data_streamer.next(ticker_name)
 
         self.history[ticker_name].push(row)
+
+        self.iter[ticker_name] += 1
 
         order = self.action_strategy.get_order(action)
 
@@ -81,17 +85,22 @@ class Environment(gym.Env):
                 max_actions = np.floor(self.broker.wallet.balance/price)
             elif order.value == 'sell':
                 max_actions = np.ceil(self.broker.wallet.locked_balance/price)
+            print('balance : %.2f, locked_balance : %.2f'%(self.broker.wallet.balance, self.broker.wallet.locked_balance))
+            print(order, ' -> %s(%.2f$)'%(max_actions, price),' for ', max_actions*price, 'fucking dollars')
+            # time.sleep(3)
             transaction = Transaction(ticker_name, order, max(0, max_actions), price, 0.0)
             self.broker.commit_order(transaction)
 
         self.broker.update(ticker_name, date)
-        self.iter[ticker_name] += 1
 
         state = self.history[ticker_name].get()
 
         reward = self.reward_strategy.get_reward(self.wallet)
 
-        done = True if self.wallet.balance <= 0 or not self.data_streamer.has_next(ticker_name) else False
+        if not self.data_streamer.has_next(ticker_name):
+            self.data_streamer.reset()
+
+        done = True if self.wallet.balance <= price or self.iter[ticker_name] >= self.max_steps else False
 
         info = {
             'wallet balance':self.broker.wallet.balance,
@@ -108,6 +117,7 @@ class Environment(gym.Env):
         self.history[ticker_name].reset()
         self.iter[ticker_name] = 0
         self.data_streamer.reset()
+        self.renderer.reset()
 
         date, row, price = self.data_streamer.next(ticker_name)
         self.history[ticker_name].push(row)

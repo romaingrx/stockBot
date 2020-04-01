@@ -7,6 +7,8 @@
 
 # WALLET DOIT CONTENIR TOUTES LES INFORMATIONS LIÉES Á L'HISTORIQUE DES TRANSACTIONS, LES ACTIONS DÉTENUES, LES DIFFÉRENTES BALANCES ET SURTOUT LA BALANCE POTENTIELLE
 
+import pandas as pd
+
 from .portfolio import Portfolio
 from .ledger import Ledger
 from .transactions import Transaction
@@ -21,6 +23,7 @@ class Wallet:
         self.initial_balance = initial_balance
         self.balance         = initial_balance
         self.free_balance    = initial_balance
+        self.info            = pd.DataFrame()
         self.locked_balance  = 0.0
         self._ledger = Ledger()
         self._portfolio = Portfolio()
@@ -36,14 +39,15 @@ class Wallet:
 
         self._portfolio.push(transaction)
         self._ledger.push(transaction)
-        self.update()
 
     # TODO: met à jour toutes les balances en fonction du _portfolio
-    def update(self, ticker_name=None, step=None):
-        if ticker_name and step:
-            self._portfolio.update(ticker_name, step)
+    def update(self, ticker_name=None, date=None):
+        if ticker_name and date:
+            self._portfolio.update(ticker_name, date)
         self.locked_balance = self._portfolio.current_balance
         self.balance = self.free_balance + self.locked_balance
+        if date:
+            self.info = self.info.append({'date':date, 'balance':self.balance, 'free_balance':self.free_balance}, ignore_index=True)
 
 
     # TODO: représentation texte du Wallet

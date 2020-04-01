@@ -7,3 +7,5 @@
 
 from .renderer_base import Renderer
 from .file_renderer import File_Renderer
+from .naive_plot import Naive_Plot
+from .basic_plot import Basic_Plot

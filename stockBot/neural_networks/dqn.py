@@ -24,19 +24,26 @@ class Deep_Q_Learning(Reinforcement_Network):
 
     def build_model(self, distribution='random_normal', bias='zeros'):
         self.input_layer    = tf.keras.Input(shape=self.input_shape, name='input', dtype='float32')
-        self.conv1d         = tf.keras.layers.Conv1D(filters=64,
+        self.conv1d_1       = tf.keras.layers.Conv1D(filters=64,
                                            kernel_size=6,
                                            padding='same',
                                            activation='tanh')(self.input_layer)
-        self.maxpooling     = tf.keras.layers.MaxPooling1D()(self.conv1d)
-        self.flatten        = tf.keras.layers.Flatten()(self.maxpooling)
+        self.maxpooling_1   = tf.keras.layers.MaxPooling1D(pool_size=2)(self.conv1d_1)
+        self.conv1d_2       = tf.keras.layers.Conv1D(filters=32,
+                                           kernel_size=3,
+                                           padding='same',
+                                           activation='tanh')(self.maxpooling_1)
+        self.maxpooling_2   = tf.keras.layers.MaxPooling1D(pool_size=2)(self.conv1d_2)
+        self.flatten        = tf.keras.layers.Flatten()(self.maxpooling_2)
         self.feed_layer     = tf.keras.layers.Dense(self.layer_size,
-                                           kernel_initializer=distribution,
-                                           bias_initializer=bias,
+                                           # kernel_initializer=distribution,
+                                           # bias_initializer=bias,
+                                           activation='sigmoid',
                                            name='feed')(self.flatten)
         self.decision_layer = tf.keras.layers.Dense(self.output_size,
-                                           kernel_initializer=distribution,
-                                           bias_initializer=bias,
+                                           # kernel_initializer=distribution,
+                                           # bias_initializer=bias,
+                                           activation='softmax',
                                            name='decision')(self.feed_layer)
         self.model          = tf.keras.models.Model(inputs=[self.input_layer],
                                           outputs=[self.decision_layer],

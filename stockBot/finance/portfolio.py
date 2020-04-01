@@ -91,14 +91,14 @@ class Portfolio:
         string += "\n"
         return string
 
-    def update(self, ticker_name, step:int=None):
+    def update(self, ticker_name, date:int=None):
         iter = self.find_ticker(ticker_name)
         if iter != -1:
             stonk = self._portfolio[iter]
-            if stonk.quantity == 0:
-                del self._portfolio[iter]
+            # if stonk.quantity == 0:
+            #     del self._portfolio[iter]
             last_price = stonk.price
-            stonk.price = get_step_data(stonk.ticker_name, step)
+            stonk.price = get_step_data(stonk.ticker_name, date)
             self.current_balance += (stonk.price-last_price)*stonk.quantity
 
     def __len__(self):

@@ -22,13 +22,13 @@ class DQNAgent(Agent):
         self.target_network   = tf.keras.models.clone_model(self.neural_network.model)
         self.target_network.trainable = False
 
-    def train(self, reward_strategy:Reward_Strategy=None, epochs:int=None, batch_size:int=128, memory_capacity:int=1000, learning_rate:float=0.001, discount_factor:float=0.05, max_steps:Optional=None, update_target_every:int=None) -> List[float]:
+    def train(self, reward_strategy:Reward_Strategy=None, epochs:int=None, batch_size:int=128, memory_capacity:int=1000, learning_rate:float=0.0001, discount_factor:float=0.9999, max_steps:Optional=None, update_target_every:int=None) -> List[float]:
 
         memory = Memory(memory_capacity, DQNTransition)
         reward_strategy = self.reward_strategy
         max_steps = max_steps or np.iinfo(np.int32).max
         epochs = epochs or 25
-        update_target_every = update_target_every or 1000
+        update_target_every = update_target_every or 128
 
         eps_max = 0.9
         eps_min = 0.05
@@ -55,7 +55,9 @@ class DQNAgent(Agent):
 
                 decision = self.neural_network.act(state, epsilon=epsilon)
 
+
                 next_state, reward, done, info = self.env.step(decision, default_ticker_name)
+                self.env.render()
 
                 if steps % 100 == 0:
                     print('episode %d ,step %d'%(episode, steps))
@@ -82,7 +84,6 @@ class DQNAgent(Agent):
                 if max_steps and steps > max_steps:
                     done = True
 
-                # self.env.render(episode)
 
             mean_loss    = np.mean(loss_values)
             mean_balance = np.mean(balance_values)
