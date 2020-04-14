@@ -8,6 +8,7 @@ import numpy as np
 from typing import Optional, List, Text
 from abc import ABC
 import tensorflow as tf
+import keras
 
 from .agent_base import Agent
 from stockBot.memory import Memory
@@ -22,17 +23,17 @@ class DQNAgent(Agent):
         self.target_network   = tf.keras.models.clone_model(self.neural_network.model)
         self.target_network.trainable = False
 
-    def train(self, reward_strategy:Reward_Strategy=None, epochs:int=None, batch_size:int=128, memory_capacity:int=1000, learning_rate:float=0.0001, discount_factor:float=0.9999, max_steps:Optional=None, update_target_every:int=None) -> List[float]:
+    def train(self, epochs:int=None, batch_size:int=128, memory_capacity:int=1000, learning_rate:float=0.0001, discount_factor:float=0.9999, max_steps:Optional=None, update_target_every:int=None) -> List[float]:
 
         memory = Memory(memory_capacity, DQNTransition)
         reward_strategy = self.reward_strategy
         max_steps = max_steps or np.iinfo(np.int32).max
         epochs = epochs or 25
-        update_target_every = update_target_every or 128
+        update_target_every = update_target_every or 1000
 
         eps_max = 0.9
         eps_min = 0.05
-        eps_constant = 200
+        eps_constant = 750
 
         episode = 0
         total_reward = 0
@@ -40,10 +41,8 @@ class DQNAgent(Agent):
 
         default_ticker_name = self.data_streamer.ticker_names[0]
 
-
         while episode < epochs:
             state = self.env.reset(default_ticker_name)
-            self.wallet.reset()
             done = False
             steps = 0
             loss_values = []
@@ -55,9 +54,9 @@ class DQNAgent(Agent):
 
                 decision = self.neural_network.act(state, epsilon=epsilon)
 
-
                 next_state, reward, done, info = self.env.step(decision, default_ticker_name)
-                self.env.render()
+
+                # self.env.render()
 
                 if steps % 100 == 0:
                     print('episode %d ,step %d'%(episode, steps))
@@ -79,11 +78,14 @@ class DQNAgent(Agent):
                 loss_values.append(loss_value)
 
                 if update_target_every % steps == 0:
-                    self.target_network.set_weights(self.neural_network.model.get_weights())
+                    del self.target_network
+                    self.target_network = tf.keras.models.clone_model(self.neural_network.model)
+                    self.target_network.trainable = False
 
                 if max_steps and steps > max_steps:
                     done = True
 
+            episode += 1
 
             mean_loss    = np.mean(loss_values)
             mean_balance = np.mean(balance_values)
@@ -91,11 +93,10 @@ class DQNAgent(Agent):
             self.neural_network.summary_scalar('loss', mean_loss, episode)
             self.neural_network.summary_scalar('balance', mean_balance, episode)
             self.neural_network.summary_scalar('reward', mean_reward, episode)
+            self.neural_network.summary_weights_biases_histogram(episode)
 
             print('Epoch %d/%d'%(episode, epochs))
             print('loss %.3f - balance %.2f - reward %.3f'%(mean_loss, mean_balance, mean_reward))
-
-            episode += 1
 
             if episode == epochs:
                 self.neural_network.save_model(episode=self.neural_network.initial_episode + epochs)
@@ -104,7 +105,7 @@ class DQNAgent(Agent):
 
 
     def _fit_memory(self, memory:Memory, batch_size:int, learning_rate:float, discount_factor:float):
-        optimizer = tf.keras.optimizers.Adam(learning_rate)
+        optimizer = tf.optimizers.Adam(lr=learning_rate)
         loss = tf.keras.losses.Huber()
 
         transitions = memory.sample(batch_size)
@@ -134,5 +135,4 @@ class DQNAgent(Agent):
         variables = self.neural_network.model.trainable_variables
         gradients = g.gradient(loss_value, variables)
         optimizer.apply_gradients(zip(gradients, variables))
-
         return loss_value

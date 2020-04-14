@@ -30,3 +30,7 @@ class Simple_Reward_Strategy(Reward_Strategy):
         reward = arr[-1] if len(arr) > 0 else 0
 
         return reward
+
+    def reset(self):
+        del self._balance_history
+        self._balance_history = pd.DataFrame()

@@ -35,3 +35,7 @@ class Reward_Strategy(ABC):
     @abstractmethod
     def _get_reward(self):
         raise NotImplementedError("get_reward not implemented")
+        
+    @abstractmethod
+    def reset(self):
+        raise NotImplementedError("get_reward not implemented")

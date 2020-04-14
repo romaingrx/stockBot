@@ -108,7 +108,9 @@ class Environment(gym.Env):
         self.history[ticker_name].reset()
         self.iter[ticker_name] = 0
         self.data_streamer.reset()
-
+        self.wallet.reset()
+        self.reward_strategy.reset()
+        
         date, row, price = self.data_streamer.next(ticker_name)
         self.history[ticker_name].push(row)
         state = self.history[ticker_name].get()

@@ -2,4 +2,3 @@
 *__pycache__
 interactive.py
 .gitignore
-res/tensorboards/

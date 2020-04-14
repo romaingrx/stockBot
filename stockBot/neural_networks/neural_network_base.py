@@ -11,6 +11,7 @@ import fnmatch
 import datetime
 from typing import Text
 import tensorflow as tf
+import numpy as np
 from abc import ABC, ABCMeta, abstractmethod
 
 from stockBot.reward_strategies import Reward_Strategy
@@ -18,7 +19,7 @@ from stockBot import MODELPATH, TENSORBOARDPATH, DEFAULT_TENSORBOARDPATH
 
 # DECORATORS
 
-def _flush(function):
+def flush(function):
     def wrapper(*args, **kwargs):
         self = args[0]
         ret = function(*args, **kwargs)
@@ -61,7 +62,7 @@ class Neural_Network(ABC):
         """
         if not self.model:
             raise NotImplementedError("Model not implemented")
-        return self.model.fit(*args, **kwargs, verbose=1, callbacks=[self.tensorboard_callback])
+        return self.model.fit(*args, **kwargs, verbose=1)
 
     def predict(self, *args, **kwargs):
         """
@@ -69,7 +70,7 @@ class Neural_Network(ABC):
         """
         if not self.model:
             raise NotImplementedError("Model not implemented")
-        return self.model.predict(*args, **kwargs, callbacks=[self.tensorboard_callback])
+        return self.model.predict(*args, **kwargs)
 
     def save_model(self, episode=None):
         """
@@ -131,12 +132,14 @@ class Neural_Network(ABC):
         if not self.model_name:
             raise NotImplementedError('Model not implemented')
         # os.system("rm -r \"%s\""%(TENSORBOARDPATH%self.model_name))
-        self.writer = tf.summary.create_file_writer(self.tensorboard_log)
+        self.writer = tf.summary.create_file_writer(self.tensorboard_log+'/train')
         self.tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir = self.tensorboard_log, histogram_freq=1)
+        input_shape = [*self.model.input_shape]
+        input_shape[0] = 1
+        self.model.predict(np.zeros(input_shape), callbacks=[self.tensorboard_callback]) # Used to display the graph in tensorboard
 
-    @_flush
+    @flush
     def summary_scalar(self, name, tensor, step, tag=None):
-        @tf.function
         def fun(name, tensor, step, tag=None):
             with self.writer.as_default():
                 tf.summary.scalar(name, tensor, step=step, description=None)
@@ -144,15 +147,40 @@ class Neural_Network(ABC):
             tensor = tf.convert_to_tensor(tensor)
         fun(name, tensor, step, tag=None)
 
-    @_flush
+    @flush
     def summary_histogram(self, name, tensor, step, tag=None):
-        @tf.function
         def fun(name, tensor, step, tag=None):
             with self.writer.as_default():
                 tf.summary.histogram(name, tensor, step=step, description=None)
         if not isinstance(tensor, tf.Tensor):
             tensor = tf.convert_to_tensor(tensor)
         fun(name, tensor, step, tag=None)
+
+    @flush
+    def summary_weights_biases_histogram(self, step):
+        with self.writer.as_default():
+            for i, layer in enumerate(self.model.layers):
+                for j, weight in enumerate(layer.weights):
+                    tf.summary.histogram(weight.name, weight.value(), step=step)
+    # @_flush
+    # def summary_scalar(self, name, tensor, step, tag=None):
+    #     @tf.function
+    #     def fun(name, tensor, step, tag=None):
+    #         with self.writer.as_default():
+    #             tf.summary.scalar(name, tensor, step=step, description=None)
+    #     if not isinstance(tensor, tf.Tensor):
+    #         tensor = tf.convert_to_tensor(tensor)
+    #     fun(name, tensor, step, tag=None)
+
+    # @_flush
+    # def summary_histogram(self, name, tensor, step, tag=None):
+    #     @tf.function
+    #     def fun(name, tensor, step, tag=None):
+    #         with self.writer.as_default():
+    #             tf.summary.histogram(name, tensor, step=step, description=None)
+    #     if not isinstance(tensor, tf.Tensor):
+    #         tensor = tf.convert_to_tensor(tensor)
+    #     fun(name, tensor, step, tag=None)
 
 
     def __str__(self):

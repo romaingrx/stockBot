@@ -35,3 +35,6 @@ class Sortino(Simple_Reward_Strategy):
         reward = (expectation - self._required_returns)/(downside_risk)
 
         return reward
+
+    def reset(self):
+        super().reset()

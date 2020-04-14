@@ -29,15 +29,15 @@ def MinMaxScaler(function):
 
 class Streamer(ABC):
 
-    def __init__(self, ticker_names:List[Text] or Text, api_key:Text=None):
+    def __init__(self, ticker_names:List[Text] or Text, features_function):
         self._raw_default_columns = ['Open', 'High', 'Low', 'Close', 'Volume']
         self.ticker_names = ticker_names
-        self.DataFrames, self.prices_rows = self.get_DataFrames()
+        self.DataFrames, self.prices_rows = self.get_DataFrames(features_function)
 
 
     @MinMaxScaler
-    def get_DataFrames(self, fun='basic_features') -> Dict[Text, pd.DataFrame]:
-        fun = getattr(features, fun)
+    def get_DataFrames(self, features_function) -> Dict[Text, pd.DataFrame]:
+        fun = getattr(features, features_function)
         _raw_DataFrames = self._get_raw_DataFrames()
         _casted_raw_DataFrames = self._cast_raw_DataFrames(_raw_DataFrames)
         _added_features_DataFrames = {k:fun(v) for k, v in _casted_raw_DataFrames.items()}

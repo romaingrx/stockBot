@@ -11,10 +11,17 @@ from stockBot.agents import DQNAgent
 from stockBot.data import Data_Streamer
 from stockBot.environments import Continuous_Environment
 
+import numpy as np
+
 tickers = 'TSLA'
-initial_balance = 1000
+initial_balance = 10000
 
 history_capacity = 30
 
-agent = DQNAgent(tickers, initial_balance, load_name=None, random=False)
-agent.train()
+agent = DQNAgent(tickers, initial_balance, random=False, features_function='stat')
+agent.train(epochs=20)
+# model = agent.neural_network.model
+# for i in range(10):
+#     state=np.random.rand(1,30,14)
+#     print(model.predict(state))
+# agent.simulate()
