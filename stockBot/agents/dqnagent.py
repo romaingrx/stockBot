@@ -5,31 +5,48 @@
 @date : Saturday, 21 March 2020
 """
 import numpy as np
-from typing import Optional, List, Text
+from typing import Optional, List, Text, Dict
 from abc import ABC
 import tensorflow as tf
 import keras
 
+from stockBot.neural_networks import Neural_Network, Deep_Q_Learning, DQNTransition, neural_network_graph
+from stockBot.reward_strategies import Reward_Strategy, Simple_Reward_Strategy, Sortino
+from stockBot.action_strategies import Action_Strategy, Simple_Action_Strategy
+from stockBot.environments import Environment, Continuous_Environment
+from stockBot.data import Data_Streamer
+from stockBot.brokers import Broker, Fake_Broker
+from stockBot.finance import Wallet
+from stockBot.renderers import Naive_Plot, Basic_Plot
 from .agent_base import Agent
 from stockBot.memory import Memory
-from stockBot.reward_strategies import Reward_Strategy
-from stockBot.neural_networks import DQNTransition
 from stockBot.utils import timer
+from numba import jit
 
 class DQNAgent(Agent):
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.target_network   = tf.keras.models.clone_model(self.neural_network.model)
-        self.target_network.trainable = False
+    def __init__(self, tickers:Text or List[Text]=None, initial_balance=None, broker:Broker=None, wallet:Wallet=None, env:Environment=None, data_streamer:Data_Streamer=None, neural_network:Neural_Network=None, reward_strategy:Reward_Strategy=None, action_strategy:Action_Strategy=None, load_name=None, hyperparams:Dict=None, Name:Text=None, **kwargs):
 
-    def train(self, epochs:int=None, batch_size:int=128, memory_capacity:int=1000, learning_rate:float=0.0001, discount_factor:float=0.9999, max_steps:Optional=None, update_target_every:int=None) -> List[float]:
+        self.hyperparams       = hyperparams
+        self._history_capacity = kwargs.get('history_capacity', 30)
+        self._random           = kwargs.get('random', False)
+        self.features_function = kwargs.get('features_function', 'basic_features')
+        self._tickers          = tickers if isinstance(tickers, list) else [tickers]
+        self.broker            = broker if isinstance(broker, Broker) else Fake_Broker(Wallet(initial_balance))
+        self.data_streamer     = data_streamer or Data_Streamer(tickers, random=self._random, history_capacity=self._history_capacity, features_function=self.features_function)
+        self.wallet            = wallet or self.broker.wallet
+        self.action_strategy   = Simple_Action_Strategy()
+        self.reward_strategy   = Simple_Reward_Strategy()
+        self.renderer          = kwargs.get('renderer', Basic_Plot())
+        self.env               = env or Environment(data_streamer=self.data_streamer, broker=self.broker, action_strategy=self.action_strategy, reward_strategy=self.reward_strategy, renderer=self.renderer, history_capacity=self._history_capacity)
+        self.neural_network    = Deep_Q_Learning(input_shape=self.env.observation_space.shape, output_size=self.env.action_space.n, load_name=kwargs.get('load_name',None), hyperparams=hyperparams, Name=Name)
 
+    def train(self, epochs:int=None, batch_size:int=128, memory_capacity:int=1000, learning_rate:float=0.0001, discount_factor:float=0.9999, max_steps:Optional=None) -> List[float]:
+        self.optimizer = tf.optimizers.Adam(lr=learning_rate)
         memory = Memory(memory_capacity, DQNTransition)
         reward_strategy = self.reward_strategy
         max_steps = max_steps or np.iinfo(np.int32).max
         epochs = epochs or 25
-        update_target_every = update_target_every or 1000
 
         eps_max = 0.9
         eps_min = 0.05
@@ -60,6 +77,7 @@ class DQNAgent(Agent):
 
                 if steps % 100 == 0:
                     print('episode %d ,step %d'%(episode, steps))
+                    info['epsilon'] = epsilon
                     print(info)
 
                 memory.push(state, decision, reward, next_state, done)
@@ -74,13 +92,8 @@ class DQNAgent(Agent):
                 if len(memory) < batch_size:
                     continue
 
-                loss_value = self._fit_memory(memory, batch_size, learning_rate, discount_factor)
+                loss_value = self._fit_memory(memory, batch_size, discount_factor)
                 loss_values.append(loss_value)
-
-                if update_target_every % steps == 0:
-                    del self.target_network
-                    self.target_network = tf.keras.models.clone_model(self.neural_network.model)
-                    self.target_network.trainable = False
 
                 if max_steps and steps > max_steps:
                     done = True
@@ -104,10 +117,7 @@ class DQNAgent(Agent):
         return rewards
 
 
-    def _fit_memory(self, memory:Memory, batch_size:int, learning_rate:float, discount_factor:float):
-        optimizer = tf.optimizers.Adam(lr=learning_rate)
-        loss = tf.keras.losses.Huber()
-
+    def _fit_memory(self, memory:Memory, batch_size:int, discount_factor:float):
         transitions = memory.sample(batch_size)
         batch = DQNTransition(*zip(*transitions))
 
@@ -117,22 +127,23 @@ class DQNAgent(Agent):
         next_state_batch = tf.convert_to_tensor(batch.next_state)
         done_batch = tf.convert_to_tensor(batch.done)
 
-        with tf.GradientTape() as g:
-            state_action_values = tf.math.reduce_sum(
-                self.neural_network.model(state_batch) * tf.one_hot(action_batch, self.env.action_space.n),
-                axis=1
-            )
-            next_state_values = tf.where(
-                done_batch,
-                tf.zeros(batch_size),
-                tf.math.reduce_max(self.target_network(next_state_batch), axis=1)
-            )
-
-            expected_state_action_values = reward_batch + (discount_factor * next_state_values)
-            loss_value = loss(expected_state_action_values, state_action_values)
-
-
         variables = self.neural_network.model.trainable_variables
-        gradients = g.gradient(loss_value, variables)
-        optimizer.apply_gradients(zip(gradients, variables))
-        return loss_value
+
+        q_next_states = self.neural_network.model(next_state_batch)
+        q_target = tf.where(done_batch, reward_batch, reward_batch + discount_factor * tf.math.reduce_max(q_next_states, axis=1))
+
+        with tf.GradientTape() as tape:
+            tape.watch(variables)
+
+            q_states = self.neural_network.model(state_batch)
+
+            action_one_hot = tf.one_hot(action_batch, depth=self.env.action_space.n)
+            q_values_actions = tf.math.reduce_sum(tf.multiply(q_states, action_one_hot) , axis=1)
+
+            loss = tf.reduce_mean(tf.square(q_values_actions - q_target))
+
+
+        gradients = tape.gradient(loss, variables)
+        self.optimizer.apply_gradients(zip(gradients, variables))
+
+        return loss

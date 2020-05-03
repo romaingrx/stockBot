@@ -13,6 +13,7 @@ from typing import Text
 import tensorflow as tf
 import numpy as np
 from abc import ABC, ABCMeta, abstractmethod
+from tensorboard.plugins.hparams import api as hp
 
 from stockBot.reward_strategies import Reward_Strategy
 from stockBot import MODELPATH, TENSORBOARDPATH, DEFAULT_TENSORBOARDPATH
@@ -41,18 +42,17 @@ class Neural_Network(ABC):
         The skeleton of all neural networks with basics functions.
     """
 
-    def __init__(self, input_shape=None, load_name=False, save_model_path:Text=None, save_tensorboard_path:Text=None):
+    def __init__(self, input_shape=None, load_name=False, save_model_path:Text=None, save_tensorboard_path:Text=None, Name=None):
         self._save_model_path = save_model_path or MODELPATH
         self._save_tensorboard_path = save_tensorboard_path or TENSORBOARDPATH
         self.input_shape = input_shape
-        self.model_name = None
         self.model = None
         self.initial_episode = 0
         if load_name:
             self.load_model(load_name)
         else:
             self.build_model()
-        self._get_simple_name_model()
+        self.model_name = Name or self._get_simple_name_model()
         self.tensorboard_log =  self._save_tensorboard_path%self.model_name + "/{}".format(datetime.datetime.now().strftime("%Y.%m.%d-%H:%M:%S"))
         self._launch_tensorboard()
 
@@ -107,11 +107,12 @@ class Neural_Network(ABC):
         """
         if not self.model:
             raise NotImplementedError('Model not implemented')
-        self.model_name = "%s-"%(self.__class__.__name__.upper())
+        string = "%s-"%(self.__class__.__name__.upper())
         for layer in self.model.layers:
-            self.model_name += '(%s)'%','.join(map(str, layer.input_shape))
-            self.model_name += '%s->'%(layer.name.upper())
-        self.model_name += '(%s)'%','.join(map(str,self.model.layers[-1].output_shape))
+            string += '(%s)'%','.join(map(str, layer.input_shape))
+            string += '%s->'%(layer.name.upper())
+        string += '(%s)'%','.join(map(str,self.model.layers[-1].output_shape))
+        return string
 
     def _get_simple_name_model(self):
         """
@@ -119,10 +120,11 @@ class Neural_Network(ABC):
         """
         if not self.model:
             raise NotImplementedError('Model not implemented')
-        self.model_name = "%s"%(self.__class__.__name__)
+        string = "%s"%(self.__class__.__name__)
         for layer in self.model.layers:
             # self.model_name += '(%s)'%','.join(map(str, layer.input_shape))
-            self.model_name += '->%s'%(layer.name)
+            string += '->%s'%(layer.name)
+        return string
         # self.model_name += '(%s)'%','.join(map(str,self.model.layers[-1].output_shape))
 
     def _launch_tensorboard(self):
@@ -133,7 +135,7 @@ class Neural_Network(ABC):
             raise NotImplementedError('Model not implemented')
         # os.system("rm -r \"%s\""%(TENSORBOARDPATH%self.model_name))
         self.writer = tf.summary.create_file_writer(self.tensorboard_log+'/train')
-        self.tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir = self.tensorboard_log, histogram_freq=1)
+        self.tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir = self.tensorboard_log, histogram_freq=1, profile_batch=0)
         input_shape = [*self.model.input_shape]
         input_shape[0] = 1
         self.model.predict(np.zeros(input_shape), callbacks=[self.tensorboard_callback]) # Used to display the graph in tensorboard
@@ -156,6 +158,10 @@ class Neural_Network(ABC):
             tensor = tf.convert_to_tensor(tensor)
         fun(name, tensor, step, tag=None)
 
+    @flush
+    def summary_hparams(self, hparams):
+        with self.writer.as_default():
+            hp.hparams(hparams)
     @flush
     def summary_weights_biases_histogram(self, step):
         with self.writer.as_default():

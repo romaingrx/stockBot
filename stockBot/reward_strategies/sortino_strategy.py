@@ -15,7 +15,7 @@ class Sortino(Simple_Reward_Strategy):
         Compute the sortino reward
         Link : https://www.daytrading.com/sortino-ratio
     """
-    def __init__(self, history_capacity=2, target_returns=0, required_returns=0):
+    def __init__(self, history_capacity=30, target_returns=0, required_returns=0):
         super().__init__(history_capacity)
         self._target_returns = target_returns
         self._required_returns = required_returns
@@ -24,7 +24,7 @@ class Sortino(Simple_Reward_Strategy):
         self._push_balance_history(wallet.balance)
         if len(self._balance_history) == 1:
             return 0
-        returns = self._history_capacity.pct_change().dropna()
+        returns = self._balance_history.pct_change().dropna()
 
         downside_risk = returns.copy()
         downside_risk[returns < self._target_returns] = returns ** 2
@@ -32,9 +32,9 @@ class Sortino(Simple_Reward_Strategy):
 
         expectation = np.mean(returns)
 
-        reward = (expectation - self._required_returns)/(downside_risk)
+        reward = (expectation - self._required_returns + 1E-10)/(downside_risk + 1E-10)
 
-        return reward
+        return float(reward) if not np.isnan(reward).any() else 0.0
 
     def reset(self):
         super().reset()

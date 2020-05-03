@@ -8,3 +8,4 @@
 from .reward_strategy_base import Reward_Strategy
 from .simple_reward_strategy import Simple_Reward_Strategy
 from .aggressive_reward_strategy import Aggressive_Reward_Strategy
+from .sortino_strategy import Sortino
